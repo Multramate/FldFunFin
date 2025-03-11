@@ -1,9 +1,11 @@
 /***
 L-FUNCTIONS OF ELLIPTIC CURVES OVER GLOBAL FUNCTION FIELDS
+
+This file defines the trace of Frobenius for the reduction of an elliptic curve
+over a global function field at any place including infinity.
 ***/
 
-intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat]) -> RngIntElt
-{ The trace of Frobenius for the reduction of E at infinity. }
+function TraceOfFrobeniusAtInfinity(E)
   R<t> := BaseRing(E);
   _, E := LocalInformation(E, 1 / t);
   invariants := [];
@@ -11,6 +13,11 @@ intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat]) -> RngIntElt
     invariants[i] := Evaluate(hom<R -> R | 1 / t>(aInvariants(E)[i]), 0);
   end for;
   return 1 - #EllipticCurve(invariants) + #BaseRing(R);
+end function;
+
+intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat]) -> RngIntElt
+{ The trace of Frobenius for the reduction of E at infinity. }
+  return TraceOfFrobeniusAtInfinity(E, p);
 end intrinsic;
 
 intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat], p :: FldFunRatUElt)
@@ -18,7 +25,8 @@ intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat], p :: FldFunRatUElt)
 { The trace of Frobenius a_p for the reduction of E at the place p. }
   R<t> := BaseRing(E);
   require p eq 1 / t or Denominator(p) eq 1: "p is not a place";
-  return p eq 1 / t select TraceOfFrobenius(E) else TraceOfFrobenius(E, p);
+  return p eq 1 / t select TraceOfFrobeniusAtInfinity(E)
+    else TraceOfFrobenius(E, p);
 end intrinsic;
 
 intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat], p :: PlcFunElt) -> RngIntElt

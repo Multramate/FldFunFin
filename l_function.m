@@ -44,6 +44,29 @@ This file defines some intrinsics that compute the formal L-function of a motive
 with coefficients in a global function field under this abstract formalism.
 ***/
 
+function LPolynomialWithoutFunctionalEquation(S, D)
+  R<T> := Universe(S);
+  D +:= 1;
+  L := 1;
+  for L_v in S do
+    L := L * L_v mod T ^ D;
+  end for;
+  return R ! Coefficients(1 / PowerSeriesRing(BaseRing(R), D) ! L);
+end function;
+
+function LPolynomialWithFunctionalEquation(S, D, E, W, G)
+  R<T> := Universe(S);
+  D_2 := Floor(D / 2);
+  L := LPolynomialWithoutFunctionalEquation(S, D_2);
+  if L eq 1 then
+    L := PolynomialRing(IntegerRing()) ! 1;
+  end if;
+  for d := D_2 + 1 to D do
+    L +:= R ! (E * G(Coefficient(L, D - d) * W ^ (D - d))) * T ^ d;
+  end for;
+  return L;
+end function;
+
 intrinsic LPolynomial(S :: {[RngUPolElt]}, D :: RngIntElt :
   FunctionalEquation := false, EpsilonFactor, WeightFactor, DualAutomorphism)
   -> RngUPolElt
@@ -57,26 +80,10 @@ intrinsic LPolynomial(S :: {[RngUPolElt]}, D :: RngIntElt :
   if IsEmpty(S) then
     return PolynomialRing(IntegerRing()) ! 1;
   end if;
-  R<T> := Universe(S);
-  if FunctionalEquation then
-    D2 := Floor(D / 2);
-    L := LPolynomial(S, D2 : FunctionalEquation := false);
-    if L eq 1 then
-      L := PolynomialRing(IntegerRing()) ! 1;
-    end if;
-    for d in [D2 + 1 .. D] do
-      dual := EpsilonFactor * Coefficient(L, D - d) * WeightFactor ^ (D - d);
-      L +:= R ! DualAutomorphism(dual) * T ^ d;
-    end for;
-  else
-    D +:= 1;
-    L := 1;
-    for L_v in S do
-      L := L * L_v mod T ^ D;
-    end for;
-    L := R ! Coefficients(1 / PowerSeriesRing(BaseRing(R), D) ! L);
-  end if;
-  return L;
+  return FunctionalEquation select
+    LPolynomialWithFunctionalEquation(S, D, EpsilonFactor, WeightFactor,
+      DualAutomorphism)
+    else LPolynomialWithoutFunctionalEquation(S, D);
 end intrinsic;
 
 intrinsic LFunction(S :: {[RngUPolElt]}, D :: RngIntElt : LDenominator := 1,
