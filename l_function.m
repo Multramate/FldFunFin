@@ -55,16 +55,19 @@ function LPolynomialWithoutFunctionalEquation(S, D)
 end function;
 
 function LPolynomialWithFunctionalEquation(S, D, E, W, G)
-  R<T> := Universe(S);
   D_2 := Floor(D / 2);
   L := LPolynomialWithoutFunctionalEquation(S, D_2);
-  if L eq 1 then
-    L := PolynomialRing(IntegerRing()) ! 1;
-  end if;
-  for d := D_2 + 1 to D do
-    L +:= R ! (E * G(Coefficient(L, D - d) * W ^ (D - d))) * T ^ d;
+  coefficients := Coefficients(L);
+  for d := #coefficients to D_2 do
+    coefficients[d + 1] := 0;
   end for;
-  return L;
+  R<T> := Parent(L);
+  W_d := 1;
+  for d := D to D_2 + 1 by -1 do
+    coefficients[d + 1] := R ! (E * G(coefficients[D - d + 1] * W_d));
+    W_d *:= W;
+  end for;
+  return R ! coefficients;
 end function;
 
 intrinsic LPolynomial(S :: {[RngUPolElt]}, D :: RngIntElt :
@@ -77,12 +80,8 @@ intrinsic LPolynomial(S :: {[RngUPolElt]}, D :: RngIntElt :
   E is the EpsilonFactor, W is the WeightFactor, and G is the DualAutomorphism
   G, then the necessary computation is decreased significantly. By default,
   FunctionalEquation is set to be false, and other arguments are not assigned. }
-  if IsEmpty(S) then
-    return PolynomialRing(IntegerRing()) ! 1;
-  end if;
-  return FunctionalEquation select
-    LPolynomialWithFunctionalEquation(S, D, EpsilonFactor, WeightFactor,
-      DualAutomorphism)
+  return FunctionalEquation select LPolynomialWithFunctionalEquation(S, D,
+      EpsilonFactor, WeightFactor, DualAutomorphism)
     else LPolynomialWithoutFunctionalEquation(S, D);
 end intrinsic;
 
@@ -103,6 +102,6 @@ intrinsic LFunction(S :: {[RngUPolElt]}, D :: RngIntElt : LDenominator := 1,
     D +:= Degree(LDenominator);
   end if;
   return LPolynomial(S, D : FunctionalEquation := FunctionalEquation,
-    EpsilonFactor := EpsilonFactor, WeightFactor := WeightFactor,
-    DualAutomorphism := DualAutomorphism) / LDenominator;
+      EpsilonFactor := EpsilonFactor, WeightFactor := WeightFactor,
+      DualAutomorphism := DualAutomorphism) / LDenominator;
 end intrinsic;
