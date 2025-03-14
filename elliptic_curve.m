@@ -41,7 +41,7 @@ intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat], P :: PlcFunElt) -> RngIntElt
   return TraceOfFrobenius(E, BaseRing(E) ! Minimum(P));
 end intrinsic;
 
-function EulerFactor(E, lis, P, p)
+function EulerFactor(E, LIs, P, p)
   R<T> := PolynomialRing(IntegerRing());
   D := Degree(P);
   if p lt D then
@@ -49,10 +49,10 @@ function EulerFactor(E, lis, P, p)
   end if;
   K<t> := BaseRing(E);
   T_D := T ^ D;
-  for li in lis do
-    if K ! P eq Minimum(li[1]) then
-      return ReductionType(li[5])[1] eq "A" select R ! 1
-        else (li[6] select 1 - T_D else 1 + T_D);
+  for LI in LIs do
+    if K ! P eq Minimum(LI[1]) then
+      return ReductionType(LI[5])[1] eq "A" select R ! 1
+        else (LI[6] select 1 - T_D else 1 + T_D);
     end if;
   end for;
   return 1 - TraceOfFrobenius(E, P) * T_D
@@ -62,7 +62,8 @@ end function;
 intrinsic EulerFactor(E :: CrvEll[FldFunRat], P :: FldFunRatUElt :
   Precision := Infinity()) -> RngUPolElt
 { The Euler factor of the elliptic curve E over a global function field at the
-  place P. }
+  place P of degree at most Precision. By default, Precision is set to be
+  infinity, so that the complete Euler factor is returned. }
   K<t> := BaseRing(E);
   require P eq 1 / t or Denominator(P) eq 1:
     "The place P is neither a prime nor the place at infinity";
@@ -74,4 +75,25 @@ intrinsic EulerFactor(E :: CrvEll[FldFunRat], P :: PlcFunElt :
 { " }
   return EulerFactor(E, LocalInformation(E), BaseRing(E) ! Minimum(P),
       Precision);
+end intrinsic;
+
+function EulerFactors(E, LIs, D)
+  K<t> := BaseRing(E);
+  S := [PolynomialRing(IntegerRing()) | ];
+  if D gt 0 then
+    Append(~S, EulerFactor(E, LIs, 1 / t, D));
+  end if;
+  for i in [1 .. D] do
+    for P in AllIrreduciblePolynomials(BaseRing(K), i) do
+      Append(~S, EulerFactor(E, LIs, P, D));
+    end for;
+  end for;
+  return S;
+end function;
+
+intrinsic EulerFactors(E :: CrvEll[FldFunRat], D :: RngIntElt)
+  -> SeqEnum[RngUPolElt]
+{ The set of all Euler factors of the elliptic curve E over a global function
+  field at the places of degree at most D. }
+  return EulerFactors(E, LocalInformation(E), D);
 end intrinsic;
