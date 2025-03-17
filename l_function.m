@@ -44,7 +44,7 @@ This file defines some intrinsics that compute the formal L-function of a motive
 with coefficients in a global function field under this abstract formalism.
 ***/
 
-function LPolynomialWithoutFunctionalEquation(S, D)
+function LPolynomialWithoutFE(S, D)
   R<T> := Universe(S);
   D +:= 1;
   L := 1;
@@ -54,9 +54,9 @@ function LPolynomialWithoutFunctionalEquation(S, D)
   return R ! Coefficients(1 / PowerSeriesRing(BaseRing(R), D) ! L);
 end function;
 
-function LPolynomialWithFunctionalEquation(S, D, E, W, G)
+function LPolynomialWithFE(S, D, E, W, G)
   D_2 := Floor(D / 2);
-  L := LPolynomialWithoutFunctionalEquation(S, D_2);
+  L := LPolynomialWithoutFE(S, D_2);
   coefficients := Coefficients(L);
   for d := #coefficients to D_2 do
     coefficients[d + 1] := 0;
@@ -71,7 +71,7 @@ function LPolynomialWithFunctionalEquation(S, D, E, W, G)
 end function;
 
 intrinsic LPolynomial(S :: {[RngUPolElt]}, D :: RngIntElt :
-  FunctionalEquation := false, EpsilonFactor, WeightFactor, DualAutomorphism)
+    FunctionalEquation := false, EpsilonFactor, WeightFactor, DualAutomorphism)
   -> RngUPolElt
 { The product L(T) of a set S of polynomials L_v(T) over a ring R, stratified
   with v such that the subset of polynomials L_v(T) in S with deg L_v(T) <= d is
@@ -80,28 +80,25 @@ intrinsic LPolynomial(S :: {[RngUPolElt]}, D :: RngIntElt :
   E is the EpsilonFactor, W is the WeightFactor, and G is the DualAutomorphism
   G, then the necessary computation is decreased significantly. By default,
   FunctionalEquation is set to be false, and other arguments are not assigned. }
-  return FunctionalEquation select LPolynomialWithFunctionalEquation(S, D,
-      EpsilonFactor, WeightFactor, DualAutomorphism)
-    else LPolynomialWithoutFunctionalEquation(S, D);
+  requirege D, 0;
+  return FunctionalEquation select LPolynomialWithFE(S, D, EpsilonFactor,
+      WeightFactor, DualAutomorphism) else LPolynomialWithoutFE(S, D);
 end intrinsic;
 
 intrinsic LFunction(S :: {[RngUPolElt]}, D :: RngIntElt : LDenominator := 1,
-  FunctionalEquation := false, EpsilonFactor, WeightFactor, DualAutomorphism)
+    FunctionalEquation := false, EpsilonFactor, WeightFactor, DualAutomorphism)
   -> RngUPolElt
 { The product L(T) of a set S of polynomials L_v(T) over a ring R, stratified
   with v such that the subset of polynomials L_v(T) in S with deg L_v(T) <= d is
   finite for any integer d, assuming that there are univariate polynomials P(T)
-  and LDenominator Q(T) over R such that L(T) Q(T) = P(T) and
-  deg P(T) - deg Q(T) = D. If the FunctionalEquation L(T) = E T^D L(W / T)^G is
-  true, where E is the EpsilonFactor, W is the WeightFactor, and G is the
-  DualAutomorphism G, then the necessary computation is decreased significantly.
-  By default, LDenominator is set to be 1, FunctionalEquation is set to be
-  false, and other arguments are not assigned. }
-  if LDenominator ne 1 then
-    Append(~S, LDenominator);
-    D +:= Degree(LDenominator);
-  end if;
-  return LPolynomial(S, D : FunctionalEquation := FunctionalEquation,
-      EpsilonFactor := EpsilonFactor, WeightFactor := WeightFactor,
-      DualAutomorphism := DualAutomorphism) / LDenominator;
+  and LDenominator Q(T) over R such that L(T) Q(T) = P(T) has degree D. If the
+  FunctionalEquation L(T) = E T^D' L(W / T)^G is true, where D' is D - deg Q(T),
+  E is the EpsilonFactor, W is the WeightFactor, and G is the DualAutomorphism
+  G, then the necessary computation is decreased significantly. By default,
+  LDenominator is set to be 1, FunctionalEquation is set to be false, and other
+  arguments are not assigned. }
+  return LPolynomial(Append(S, LDenominator), D :
+      FunctionalEquation := FunctionalEquation, EpsilonFactor := EpsilonFactor,
+      WeightFactor := WeightFactor, DualAutomorphism := DualAutomorphism)
+    / LDenominator;
 end intrinsic;
