@@ -18,9 +18,21 @@ L_v(E, T) is given by 1 - a_v(E) T + q_v T^2. Otherwise, a_v(E) is 1 if the
 reduction is split multiplicative, -1 if it is non-split multiplicative, and 0
 if it is additive, in which case L_v(E, T) is given by 1 - a_v(E) T.
 
-This file defines the traces of Frobenius and local Euler factors for an
-elliptic curve over the global function field k(t) of the projective line over
-k, which has a unique place at infinity 1 / t.
+It remains to compute the global root number e(E) := e(h^1(E)(1)) of E for the
+functional equation L(E, T) = e(E) q^d(E) T^d(E) L(E, 1 / q^2 T), where
+d(E) := d(h^1(E)(1)) is (4 g - 4) + deg f(h^1(E)(1)). This is the product of
+local root numbers e_v(E) of the places v of K where E has bad reduction, with
+explicit formulae in terms of Kronecker symbols (-, q_v) when the characteristic
+is different from 2 and 3. If the reduction is potentially good, then the
+greatest common divisor g_v(E) between 12 and the valuation of the discriminant
+of E_v can only take the values 2, 3, 4, 6, 12, and in particular e_v(E) is 1 if
+g_v(E) = 12, (-3, q_v) if g_v(E) = 4, (-2, q_v) if g_v(E) = 3, and (-1, q_v)
+otherwise. Otherwise, e_v(E) is -1 if the reduction is split multiplicative, 1
+if it is non-split multiplicative, and (-1, q_v) if it is additive.
+
+This file defines the traces of Frobenius, local Euler factors, and local root
+numbers for an elliptic curve over the global function field k(t) of the
+projective line over k, which has a unique place at infinity 1 / t.
 */
 
 function TraceOfFrobeniusWithLI(E, LIs, v)
@@ -148,4 +160,58 @@ intrinsic EulerFactors(E :: CrvEll[FldFunRat], D :: RngIntElt)
   places of k(t) of degree at most D. }
   requirege D, 0;
   return EulerFactorsWithLI(E, LocalInformation(E), D);
+end intrinsic;
+
+function LocalRootNumberWithLI(E, LI)
+  K<t> := BaseRing(E);
+  k<a> := BaseRing(K);
+  d := Degree(LI[1]);
+  if Valuation(jInvariant(E), LI[1]) ge 0 then
+    g := GCD(LI[2], 12);
+    return g eq 12 select 1 else
+      KroneckerSymbol(g eq 4 select -3 else g eq 3 select -2 else -1, #k) ^ d;
+  else
+    return ReductionType(LI[5])[1] eq "A" select KroneckerSymbol(-1, #k) ^ d
+      else LI[6] select -1 else 1;
+  end if;
+end function;
+
+intrinsic LocalRootNumber(E :: CrvEll[FldFunRat], v :: FldFunRatUElt)
+  -> RngIntElt
+{ The local root number e_v(E) of an elliptic curve E over k(t) at an element v
+  of k(t), which must either be a prime element of k[t] or 1 / t. Note that this
+  has not been implemented for characteristic 2 and 3. }
+  K<t> := BaseRing(E);
+  require Characteristic(K) gt 3:
+    "This has not been implemented for characteristic 2 and 3";
+  require Denominator(v) eq 1 or v eq 1 / t:
+    "The place v is neither an element of k[t] nor 1 / t";
+  return LocalRootNumberWithLI(E, LocalInformation(E, v));
+end intrinsic;
+
+intrinsic LocalRootNumber(E :: CrvEll[FldFunRat], v :: PlcFunElt) -> RngIntElt
+{ The local root number e_v(E) of an elliptic curve E over k(t) at a place v of
+  k(t). Note that this has not been implemented for characteristic 2 and 3. }
+  K<t> := BaseRing(E);
+  return LocalRootNumber(E, K ! Minimum(v));
+end intrinsic;
+
+intrinsic LocalRootNumber(E :: CrvEll[FldFunRat]) -> RngIntElt
+{ The local root number e_v(E) of an elliptic curve E over k(t) at 1 / t. Note
+  that this has not been implemented for characteristic 2 and 3. }
+  K<t> := BaseRing(E);
+  return LocalRootNumber(E, 1 / t);
+end intrinsic;
+
+function RootNumberWithLI(E, LIs)
+  return &*[IntegerRing() | LocalRootNumberWithLI(E, LI) : LI in LIs];
+end function;
+
+intrinsic RootNumber(E :: CrvEll[FldFunRat]) -> RngIntElt
+{ The global root number e(E) of an elliptic curve E over k(t). Note that this
+  has not been implemented for characteristic 2 and 3. }
+  K<t> := BaseRing(E);
+  require Characteristic(K) gt 3:
+    "This has not been implemented for characteristic 2 and 3";
+  return RootNumberWithLI(E, LocalInformation(E));
 end intrinsic;
