@@ -30,9 +30,10 @@ g_v(E) = 12, (-3, q_v) if g_v(E) = 4, (-2, q_v) if g_v(E) = 3, and (-1, q_v)
 otherwise. Otherwise, e_v(E) is -1 if the reduction is split multiplicative, 1
 if it is non-split multiplicative, and (-1, q_v) if it is additive.
 
-This file defines the traces of Frobenius, local Euler factors, and local root
-numbers for an elliptic curve over the global function field k(t) of the
-projective line over k, which has a unique place at infinity 1 / t.
+This file defines some intrinsics that compute the formal L-function of an
+elliptic curve over the global function field k(t) of the projective line over
+k, which has a unique place at infinity 1 / t. This includes generalised traces
+of Frobenius, local and global Euler factors, and local and global root numbers.
 */
 
 function TraceOfFrobeniusWithLI(E, LIs, v)
@@ -214,4 +215,45 @@ intrinsic RootNumber(E :: CrvEll[FldFunRat]) -> RngIntElt
   require Characteristic(K) gt 3:
     "This has not been implemented for characteristic 2 and 3";
   return RootNumberWithLI(E, LocalInformation(E));
+end intrinsic;
+
+function LDegreeWithLI(E, LIs)
+  return &+[IntegerRing() | Degree(LI[1]) * LI[3] : LI in LIs] - 4;
+end function;
+
+intrinsic LDegree(E :: CrvEll[FldFunRat]) -> RngUPolElt
+{ The value deg P(E, T) - deg Q(E, T) for an elliptic curve E over k(t) with
+  formal L-function L(E, T) such that L(E, T) Q(E, T) = P(E, T) for some
+  univariate polynomials P(E, T) and Q(E, T) over k. }
+  return LDegreeWithLI(E, LocalInformation(E));
+end intrinsic;
+
+intrinsic LFunction_(E :: CrvEll[FldFunRat] : FunctionalEquation := true)
+  -> RngUPolElt
+{ The formal L-function L(E, T) of a elliptic curve E over k(t). If E is a
+  constant elliptic curve arising as the base change of some base elliptic
+  curve E' over k, then this returns 1 / Q(T) Q(q T), where Q(T) is the
+  numerator of the zeta-function of E'. Otherwise, if the FunctionalEquation
+  L(E, T) = e(E) q^(d(E)) T^(d(E)) L(E, 1 / q^2 T) is true, then the necessary
+  computation is decreased significantly. By default, FunctionalEquation is set
+  to be true, but this has not been implemented for characteristic 2 and 3. }
+  constant, E_ := IsConstantCurve(E);
+  if constant then
+    L<T> := LPolynomial(E_);
+    return 1 / (L * Evaluate(L, #BaseRing(E_) * T));
+  end if;
+  K<t> := BaseRing(E);
+  k<a> := BaseRing(K);
+  LIs := LocalInformation(E);
+  D := LDegreeWithLI(E, LIs);
+  if FunctionalEquation then
+    require Characteristic(K) gt 3:
+      "This has not been implemented for characteristic 2 and 3";
+    return LFunction(EulerFactorsWithLI(E, LIs, Floor(D / 2)), D :
+        FunctionalEquation := true,
+        EpsilonFactor := RootNumberWithLI(E, LIs) * #k ^ D,
+        WeightFactor := 1 / #k ^ 2, DualAutomorphism := func<x | x>);
+  else
+    return LFunction(EulerFactorsWithLI(E, LIs, D), D);
+  end if;
 end intrinsic;
