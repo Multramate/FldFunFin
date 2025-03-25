@@ -69,3 +69,25 @@ intrinsic Log(M :: RngUPolElt[FldFin], b :: RngUPolElt[FldFin],
 { " }
   return Log(quo<Parent(M) | M> ! b, x);
 end intrinsic;
+
+function DirichletCharacterFunc(g, h, x)
+  return h ^ Log(g, x);
+end function;
+
+intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: RngUPolElt[FldFin],
+    h :: FldCycElt[FldRat]) -> Map
+{ The Dirichlet character over k(t) of modulus M for a non-zero irreducible
+  polynomial M in k[t], given by mapping a generator g in the unit group of
+  k[t] / M to an element h in a cyclotomic field over Q. }
+  require h ^ EulerPhi(M) eq 1:
+    "The order of the element h does not divide the order of the generator g.";
+  return func<x | DirichletCharacterFunc(quo<Parent(M) | M> ! g, h, x)>;
+end intrinsic;
+
+intrinsic DirichletCharacter(g :: RngUPolResElt[FldFin], h :: FldCycElt[FldRat])
+  -> Map
+{ " }
+  require h ^ EulerPhi(Modulus(Parent(g))) eq 1:
+    "The order of the element h does not divide the order of the generator g.";
+  return func<x | DirichletCharacterFunc(g, h, x)>;
+end intrinsic;
