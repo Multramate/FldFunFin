@@ -105,39 +105,38 @@ function EulerFactorWithLI(E, LIs, v, D, P)
 end function;
 
 intrinsic EulerFactor(E :: CrvEll[FldFunRat], v :: FldFunRatUElt :
-    Degree := Degree(v), Precision := Infinity()) -> RngUPolElt
+    Exponent := Degree(v), Precision := Infinity()) -> RngUPolElt
 { The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at an element v
   of k(t), which must either be a prime element of k[t] or 1 / t, where D is
-  some integral Degree. If Precision is set to be finite, then this is truncated
-  to a polynomial of degree at most Precision, By default, Degree is set to be
+  some Exponent. If Precision is set to be finite, then this is truncated to a
+  polynomial of degree at most Precision, By default, Exponent is set to be
   the degree of the place associated to v and Precision is set to be infinity. }
   K<t> := BaseRing(E);
   require Denominator(v) eq 1 or v eq 1 / t:
     "The place v is neither an element of k[t] nor 1 / t";
-  requirege Degree, 0;
-  requirege Precision, 0;
-  return EulerFactorWithLI(E, LocalInformation(E), v, Degree, Precision);
+  requirege Exponent, 0;
+  return EulerFactorWithLI(E, LocalInformation(E), v, Exponent, Precision);
 end intrinsic;
 
 intrinsic EulerFactor(E :: CrvEll[FldFunRat], v :: PlcFunElt :
-    Degree := Degree(v), Precision := Infinity()) -> RngUPolElt
+    Exponent := Degree(v), Precision := Infinity()) -> RngUPolElt
 { The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at a place v of
-  k(t), where D is some integral Degree. If Precision is set to be finite, then
-  this is truncated to a polynomial of degree at most Precision. By default,
-  Degree is set to be the degree of v and Precision is set to be infinity. }
+  k(t), where D is some Exponent. If Precision is set to be finite, then this is
+  truncated to a polynomial of degree at most Precision. By default, Exponent is
+  set to be the degree of v and Precision is set to be infinity. }
   K<t> := BaseRing(E);
-  return EulerFactor(E, K ! Minimum(v) : Degree := Degree,
+  return EulerFactor(E, K ! Minimum(v) : Exponent := Exponent,
       Precision := Precision);
 end intrinsic;
 
-intrinsic EulerFactor(E :: CrvEll[FldFunRat] : Degree := 1,
+intrinsic EulerFactor(E :: CrvEll[FldFunRat] : Exponent := 1,
     Precision := Infinity()) -> RngIntElt
 { The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at 1 / t, where
-  D is some integral Degree. If Precision is set to be finite, then this is
-  truncated to a polynomial of degree at most Precision. By default, Degree is
-  set to be 1 and Precision is set to be infinity. }
+  D is some Exponent. If Precision is set to be finite, then this is truncated
+  to a polynomial of degree at most Precision. By default, Exponent is set to be
+  1 and Precision is set to be infinity. }
   K<t> := BaseRing(E);
-  return EulerFactor(E, 1 / t : Degree := 1, Precision := Precision);
+  return EulerFactor(E, 1 / t : Exponent := 1, Precision := Precision);
 end intrinsic;
 
 function EulerFactorsWithLI(E, LIs, D)

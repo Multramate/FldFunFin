@@ -31,13 +31,13 @@ function LogWithPhi(phi, b, x)
     end if;
     b_n *:= b;
     if b_n eq 0 then
-      return 0; // the base b is not a unit
+      return -1; // the base b is not a unit
     end if;
     if b_n eq 1 then
-      return -1; // the base b is not a generator
+      return -2; // the base b is not a generator
     end if;
   end for;
-  return -2; // the element x is not a unit
+  return -3; // the element x is not a unit
 end function;
 
 intrinsic Log(b :: RngUPolResElt[FldFin], x :: RngUPolResElt[FldFin])
@@ -48,9 +48,9 @@ intrinsic Log(b :: RngUPolResElt[FldFin], x :: RngUPolResElt[FldFin])
   M := Modulus(Parent(b));
   require IsIrreducible(M): "The modulus M is not irreducible.";
   n := LogWithPhi(EulerPhi(M), b, x);
-  require n ne 0: "The base b is not a unit.";
-  require n ne -1: "The base b is not a generator.";
-  require n ne -2: "The element x is not a unit.";
+  require n ne -1: "The base b is not a unit.";
+  require n ne -2: "The base b is not a generator.";
+  require n ne -3: "The element x is not a unit.";
   return n;
 end intrinsic;
 
