@@ -46,7 +46,7 @@ function TraceOfFrobeniusWithLI(E, LIs, v)
     end if;
   end for;
   if v ne 1 / t then
-    return TraceOfFrobenius(E, IntegerRing(K) ! v);
+    return TraceOfFrobenius(E, Numerator(v));
   end if;
   _, E := LocalInformation(E, 1 / t);
   invariants := [];
@@ -56,7 +56,7 @@ function TraceOfFrobeniusWithLI(E, LIs, v)
   return 1 - #EllipticCurve(invariants) + #BaseRing(K);
 end function;
 
-intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat], v :: FldFunRatUElt)
+intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat], v :: FldFunRatUElt[FldFin])
   -> RngIntElt
 { The trace of Frobenius a_v(E) for the reduction of an elliptic curve E over
   k(t) at an element v of k(t), which must either be a prime element of k[t] or
@@ -104,7 +104,7 @@ function EulerFactorWithLI(E, LIs, v, D, P)
   return 1 - TraceOfFrobeniusWithLI(E, LIs, v) * T_D + #k ^ D * T_D ^ 2;
 end function;
 
-intrinsic EulerFactor(E :: CrvEll[FldFunRat], v :: FldFunRatUElt :
+intrinsic EulerFactor(E :: CrvEll[FldFunRat], v :: FldFunRatUElt[FldFin] :
     Exponent := Degree(v), Precision := Infinity()) -> RngUPolElt
 { The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at an element v
   of k(t), which must either be a prime element of k[t] or 1 / t, where D is
@@ -176,7 +176,7 @@ function LocalRootNumberWithLI(E, LI)
   end if;
 end function;
 
-intrinsic LocalRootNumber(E :: CrvEll[FldFunRat], v :: FldFunRatUElt)
+intrinsic LocalRootNumber(E :: CrvEll[FldFunRat], v :: FldFunRatUElt[FldFin])
   -> RngIntElt
 { The local root number e_v(E) of an elliptic curve E over k(t) at an element v
   of k(t), which must either be a prime element of k[t] or 1 / t. Note that this
