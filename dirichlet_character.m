@@ -8,7 +8,9 @@ place at infinity 1 / t.
 
 declare type GrpDrchFFElt;
 
-declare attributes GrpDrchFFElt: BaseRing, BaseField, Modulus, Generator, Image;
+declare attributes GrpDrchFFElt: BaseRing, BaseField, Characteristic, Conductor,
+  Generator, GeneratorImage, ImageField, Modulus, Parity, ResidueField,
+  ResidueOrder, Variable;
 
 intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any, h :: Any)
   -> GrpDrchFFElt
@@ -16,15 +18,22 @@ intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any, h :: Any)
   M in k[t], given by mapping an element g in k[t] that is a unit and a
   generator when reduced modulo M, to an element h that is a complex number. }
   R<t> := Parent(M);
-  require IsIrreducible(M): "The modulus M is not irreducible in k[t].";
+  k<u> := BaseRing(R);
+  require IsIrreducible(M): "The modulus M is not a prime element of k[t].";
   require IsCoercible(R, g): "The generator g is not a polynomial in k[t].";
   require IsCoercible(ComplexField(), h):
     "The element h is not a complex number.";
   X := New(GrpDrchFFElt);
   X`BaseRing := R;
-  X`Modulus := M;
+  X`BaseField := FieldOfFractions(R);
+  X`Characteristic := Characteristic(k);
   X`Generator := g;
-  X`Image := h;
+  X`GeneratorImage := h;
+  X`ImageField := Parent(h);
+  X`Modulus := M;
+  X`ResidueField := k;
+  X`ResidueOrder := #k;
+  X`Variable := t;
   return X;
 end intrinsic;
 
@@ -37,10 +46,9 @@ end intrinsic;
 
 intrinsic Print(X :: GrpDrchFFElt)
 { Print a Dirichlet character over k(t). }
-  R<t> := X`BaseRing;
   printf
     "Dirichlet character over F_%o(%o) of modulus %o given by mapping %o to %o",
-    Characteristic(R), t, X`Modulus, X`Generator, X`Image;
+    X`ResidueOrder, X`Variable, X`Modulus, X`Generator, X`GeneratorImage;
 end intrinsic;
 
 function EulerPhiWithF(FM)
@@ -88,7 +96,7 @@ intrinsic Log(M :: RngUPolElt[FldFin], b :: Any, x :: Any) -> RngIntElt
 { The discrete logarithm log_b(x) for a base b and an element x in k[t] that are
   units when reduced modulo a non-zero irreducible modulus M in k[t]. This is
   the smallest positive integer n such that b ^ n = x. }
-  require IsIrreducible(M): "The modulus M is not irreducible in k[t].";
+  require IsIrreducible(M): "The modulus M is not a prime element of k[t].";
   R<t> := Parent(M);
   require IsCoercible(R, b): "The base b is not a polynomial in k[t].";
   require IsCoercible(R, x): "The element x is not a polynomial in k[t].";
@@ -105,10 +113,49 @@ intrinsic Log(M :: FldFunRatUElt[FldFin], b :: Any, x :: Any) -> RngIntElt
   return Log(Numerator(M), b, x);
 end intrinsic;
 
+function Evaluate(X, x)
+  M := X`Modulus;
+  return X`BaseRing ! x mod M eq 0 select 0 else
+    X`GeneratorImage ^ Log(M, X`Generator, x);
+end function;
+
 intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> Any
 { Evaluate a Dirichlet character X over k(t) on an element x in k[t]. }
-  R<t> := X`BaseRing;
-  M := X`Modulus;
-  require IsCoercible(R, x): "The element x is not a polynomial in k[t].";
-  return R ! x mod M eq 0 select 0 else X`Image ^ Log(M, X`Generator, x);
+  require IsCoercible(X`BaseRing, x):
+    "The element x is not a polynomial in k[t].";
+  return Evaluate(X, x);
+end intrinsic;
+
+procedure AssignParity(X)
+  X`Parity := X(PrimitiveRoot(X`ResidueOrder)) eq 1;
+end procedure;
+
+intrinsic Parity(X :: GrpDrchFFElt) -> Bool
+{ The parity of a Dirichlet character X over k(t). This returns true if X is
+  even, namely that X is trivial on all elements of k. }
+  if not assigned X`Parity then
+    AssignParity(X);
+  end if;
+  return X`Parity;
+end intrinsic;
+
+procedure AssignConductor(X)
+  S := [];
+  if not Parity(X) then
+    Append(~S, <1 / X`Variable, 1>);
+  end if;
+  if X`GeneratorImage ne 1 then
+    Append(~S, <X`Modulus, 1>);
+  end if;
+  X`Conductor := S;
+end procedure;
+
+intrinsic Conductor(X :: GrpDrchFFElt) -> SeqEnum[Tup]
+{ The conductor of a Dirichlet character X over k(t). This returns a sequence of
+  tuples of the form <M, e>, where M is either a prime element of k[t] or 1 / t,
+  and the local conductor exponent e at M is a positive integer. }
+  if not assigned X`Conductor then
+    AssignConductor(X);
+  end if;
+  return X`Conductor;
 end intrinsic;
