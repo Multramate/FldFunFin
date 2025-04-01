@@ -9,7 +9,7 @@ place at infinity 1 / t.
 declare type GrpDrchFFElt;
 
 declare attributes GrpDrchFFElt: BaseRing, BaseField, Characteristic, Conductor,
-  Generator, GeneratorImage, ImageField, Modulus, Parity, ResidueField,
+  EulerPhi, Generator, GeneratorImage, ImageRing, Modulus, Parity, ResidueField,
   ResidueOrder, Variable;
 
 intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any, h :: Any)
@@ -24,31 +24,95 @@ intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any, h :: Any)
   require IsCoercible(ComplexField(), h):
     "The element h is not a complex number.";
   X := New(GrpDrchFFElt);
-  X`BaseRing := R;
-  X`BaseField := FieldOfFractions(R);
-  X`Characteristic := Characteristic(k);
   X`Generator := g;
   X`GeneratorImage := h;
-  X`ImageField := Parent(h);
   X`Modulus := M;
-  X`ResidueField := k;
-  X`ResidueOrder := #k;
-  X`Variable := t;
   return X;
 end intrinsic;
 
 intrinsic DirichletCharacter(M :: FldFunRatUElt[FldFin], g :: Any, h :: Any)
-  -> Map
+  -> GrpDrchFFElt
 { " }
   require Denominator(M) eq 1: "The modulus M is not a polynomial in k[t].";
   return DirichletCharacter(Numerator(M), g, h);
 end intrinsic;
 
+intrinsic BaseRing(X :: GrpDrchFFElt) -> RngUPol[FldFin]
+{ The base ring k[t] of a Dirichlet character X over k(t). }
+  if not assigned X`BaseRing then
+    X`BaseRing := Parent(X`Modulus);
+  end if;
+  return X`BaseRing;
+end intrinsic;
+
+intrinsic BaseField(X :: GrpDrchFFElt) -> FldFunRat[FldFin]
+{ The base field k(t) of a Dirichlet character X over k(t). }
+  if not assigned X`BaseField then
+    X`BaseField := FieldOfFractions(BaseRing(X));
+  end if;
+  return X`BaseField;
+end intrinsic;
+
+intrinsic Characteristic(X :: GrpDrchFFElt) -> RngIntElt
+{ The characteristic char(k(t)) of a Dirichlet character X over k(t). }
+  if not assigned X`Characteristic then
+    X`Characteristic := Characteristic(BaseRing(X));
+  end if;
+  return X`Characteristic;
+end intrinsic;
+
+intrinsic Generator(X :: GrpDrchFFElt) -> RngUPolResElt[FldFin]
+{ The generator that defines a Dirichlet character X over k(t). }
+  return X`Generator;
+end intrinsic;
+
+intrinsic GeneratorImage(X :: GrpDrchFFElt) -> Any
+{ The image of the generator that defines a Dirichlet character X over k(t). }
+  return X`GeneratorImage;
+end intrinsic;
+
+intrinsic ImageRing(X :: GrpDrchFFElt) -> Any
+{ The base ring of the codomain of a Dirichlet character X over k(t). }
+  if not assigned X`ImageRing then
+    X`ImageRing := Parent(X`GeneratorImage);
+  end if;
+  return X`ImageRing;
+end intrinsic;
+
+intrinsic Modulus(X :: GrpDrchFFElt) -> RngUPolElt[FldFin]
+{ The modulus of a Dirichlet character X over k(t). }
+  return X`Modulus;
+end intrinsic;
+
+intrinsic ResidueField(X :: GrpDrchFFElt) -> FldFin
+{ The residue field k of a Dirichlet character X over k(t). }
+  if not assigned X`ResidueField then
+    X`ResidueField := BaseRing(BaseRing(X));
+  end if;
+  return X`ResidueField;
+end intrinsic;
+
+intrinsic ResidueOrder(X :: GrpDrchFFElt) -> RngIntElt
+{ The residue order #k of a Dirichlet character X over k(t). }
+  if not assigned X`ResidueOrder then
+    X`ResidueOrder := #ResidueField(X);
+  end if;
+  return X`ResidueOrder;
+end intrinsic;
+
+intrinsic Variable(X :: GrpDrchFFElt) -> RngUPolElt
+{ The variable t of a Dirichlet character X over k(t). }
+  if not assigned X`Variable then
+    X`Variable := BaseRing(X).1;
+  end if;
+  return X`Variable;
+end intrinsic;
+
 intrinsic Print(X :: GrpDrchFFElt)
-{ Print a Dirichlet character over k(t). }
+{ Print a Dirichlet character X over k(t). }
   printf
     "Dirichlet character over F_%o(%o) of modulus %o given by mapping %o to %o",
-    X`ResidueOrder, X`Variable, X`Modulus, X`Generator, X`GeneratorImage;
+    ResidueOrder(X), Variable(X), Modulus(X), Generator(X), GeneratorImage(X);
 end intrinsic;
 
 function EulerPhiWithF(FM)
@@ -72,6 +136,15 @@ intrinsic EulerPhi(M :: FldFunRatUElt[FldFin]) -> RngIntElt
 { " }
   require Denominator(M) eq 1: "The modulus M is not a polynomial in k[t].";
   return EulerPhi(Numerator(M));
+end intrinsic;
+
+intrinsic EulerPhi(X :: GrpDrchFFElt) -> RngIntElt
+{ The Euler totient function Phi(M) of a Dirichlet character X over k(t) of a
+  non-zero modulus M in k[t]. This is the order of the unit group of k[t] / M. }
+  if not assigned X`EulerPhi then
+    X`EulerPhi := EulerPhi(Modulus(X));
+  end if;
+  return X`EulerPhi;
 end intrinsic;
 
 function LogWithMod(M, b, x)
@@ -114,48 +187,48 @@ intrinsic Log(M :: FldFunRatUElt[FldFin], b :: Any, x :: Any) -> RngIntElt
 end intrinsic;
 
 function Evaluate(X, x)
-  M := X`Modulus;
-  return X`BaseRing ! x mod M eq 0 select 0 else
-    X`GeneratorImage ^ Log(M, X`Generator, x);
+  M := Modulus(X);
+  return BaseRing(X) ! x mod M eq 0 select 0 else
+    GeneratorImage(X) ^ Log(M, Generator(X), x);
 end function;
 
 intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> Any
 { Evaluate a Dirichlet character X over k(t) on an element x in k[t]. }
-  require IsCoercible(X`BaseRing, x):
+  require IsCoercible(BaseRing(X), x):
     "The element x is not a polynomial in k[t].";
   return Evaluate(X, x);
 end intrinsic;
 
-procedure AssignParity(X)
-  X`Parity := X(PrimitiveRoot(X`ResidueOrder)) eq 1;
-end procedure;
+function ParityWithPR(X, PR)
+  return X(PR) eq 1;
+end function;
 
 intrinsic Parity(X :: GrpDrchFFElt) -> Bool
 { The parity of a Dirichlet character X over k(t). This returns true if X is
   even, namely that X is trivial on all elements of k. }
   if not assigned X`Parity then
-    AssignParity(X);
+    X`Parity := ParityWithPR(X, PrimitiveRoot(ResidueOrder(X)));
   end if;
   return X`Parity;
 end intrinsic;
 
-procedure AssignConductor(X)
+function ConductorWithPR(X, PR)
   S := [];
-  if not Parity(X) then
-    Append(~S, <1 / X`Variable, 1>);
+  if not ParityWithPR(X, PR) then
+    Append(~S, <1 / Variable(X), 1>);
   end if;
-  if X`GeneratorImage ne 1 then
-    Append(~S, <X`Modulus, 1>);
+  if GeneratorImage(X) ne 1 then
+    Append(~S, <Modulus(X), 1>);
   end if;
-  X`Conductor := S;
-end procedure;
+  return S;
+end function;
 
 intrinsic Conductor(X :: GrpDrchFFElt) -> SeqEnum[Tup]
 { The conductor of a Dirichlet character X over k(t). This returns a sequence of
   tuples of the form <M, e>, where M is either a prime element of k[t] or 1 / t,
   and the local conductor exponent e at M is a positive integer. }
   if not assigned X`Conductor then
-    AssignConductor(X);
+    X`Conductor := ConductorWithPR(X, PrimitiveRoot(ResidueOrder(X)));
   end if;
   return X`Conductor;
 end intrinsic;
