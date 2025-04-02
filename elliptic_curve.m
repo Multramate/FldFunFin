@@ -59,7 +59,7 @@ end function;
 intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat], v :: FldFunRatUElt[FldFin])
   -> RngIntElt
 { The trace of Frobenius a_v(E) for the reduction of an elliptic curve E over
-  k(t) at an element v of k(t), which must either be a prime element of k[t] or
+  k(t) at a place v of k(t), which must either be a prime element of k[t] or
   1 / t. Note that this returns 1 if it is split multiplicative, -1 if it is
   non-split multiplicative, and 0 if it is additive. }
   K<t> := BaseRing(E);
@@ -79,8 +79,8 @@ end intrinsic;
 
 intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat]) -> RngIntElt
 { The trace of Frobenius a_v(E) for the reduction of an elliptic curve E over
-  k(t) at 1 / t. Note that this returns 1 if it is split multiplicative, -1 if
-  it is non-split multiplicative, and 0 if it is additive. }
+  k(t) at v = 1 / t. Note that this returns 1 if it is split multiplicative, -1
+  if it is non-split multiplicative, and 0 if it is additive. }
   K<t> := BaseRing(E);
   return TraceOfFrobenius(E, 1 / t);
 end intrinsic;
@@ -106,9 +106,9 @@ end function;
 
 intrinsic EulerFactor(E :: CrvEll[FldFunRat], v :: FldFunRatUElt[FldFin] :
     Exponent := Degree(v), Precision := Infinity()) -> RngUPolElt
-{ The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at an element v
-  of k(t), which must either be a prime element of k[t] or 1 / t, where D is
-  some Exponent. If Precision is set to be finite, then this is truncated to a
+{ The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at a place v of
+  k(t), which must either be a prime element of k[t] or 1 / t, where D is some
+  Exponent. If Precision is set to be finite, then this is truncated to a
   polynomial of degree at most Precision, By default, Exponent is set to be
   the degree of the place associated to v and Precision is set to be infinity. }
   K<t> := BaseRing(E);
@@ -131,10 +131,10 @@ end intrinsic;
 
 intrinsic EulerFactor(E :: CrvEll[FldFunRat] : Exponent := 1,
     Precision := Infinity()) -> RngIntElt
-{ The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at 1 / t, where
-  D is some Exponent. If Precision is set to be finite, then this is truncated
-  to a polynomial of degree at most Precision. By default, Exponent is set to be
-  1 and Precision is set to be infinity. }
+{ The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at v = 1 / t,
+  where D is some Exponent. If Precision is set to be finite, then this is
+  truncated to a polynomial of degree at most Precision. By default, Exponent is
+  set to be 1 and Precision is set to be infinity. }
   K<t> := BaseRing(E);
   return EulerFactor(E, 1 / t : Exponent := 1, Precision := Precision);
 end intrinsic;
@@ -178,8 +178,8 @@ end function;
 
 intrinsic LocalRootNumber(E :: CrvEll[FldFunRat], v :: FldFunRatUElt[FldFin])
   -> RngIntElt
-{ The local root number e_v(E) of an elliptic curve E over k(t) at an element v
-  of k(t), which must either be a prime element of k[t] or 1 / t. Note that this
+{ The local root number e_v(E) of an elliptic curve E over k(t) at a place v of
+  k(t), which must either be a prime element of k[t] or 1 / t. Note that this
   has not been implemented for characteristic 2 and 3. }
   K<t> := BaseRing(E);
   require Characteristic(K) gt 3:
@@ -197,8 +197,8 @@ intrinsic LocalRootNumber(E :: CrvEll[FldFunRat], v :: PlcFunElt) -> RngIntElt
 end intrinsic;
 
 intrinsic LocalRootNumber(E :: CrvEll[FldFunRat]) -> RngIntElt
-{ The local root number e_v(E) of an elliptic curve E over k(t) at 1 / t. Note
-  that this has not been implemented for characteristic 2 and 3. }
+{ The local root number e_v(E) of an elliptic curve E over k(t) at v = 1 / t.
+  Note that this has not been implemented for characteristic 2 and 3. }
   K<t> := BaseRing(E);
   return LocalRootNumber(E, 1 / t);
 end intrinsic;

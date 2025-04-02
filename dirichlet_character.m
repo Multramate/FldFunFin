@@ -138,11 +138,15 @@ intrinsic EulerPhi(M :: FldFunRatUElt[FldFin]) -> RngIntElt
   return EulerPhi(Numerator(M));
 end intrinsic;
 
+procedure AssignEulerPhi(X)
+  X`EulerPhi := EulerPhi(Modulus(X));
+end procedure;
+
 intrinsic EulerPhi(X :: GrpDrchFFElt) -> RngIntElt
 { The Euler totient function Phi(M) of a Dirichlet character X over k(t) of a
   non-zero modulus M in k[t]. This is the order of the unit group of k[t] / M. }
   if not assigned X`EulerPhi then
-    X`EulerPhi := EulerPhi(Modulus(X));
+    AssignEulerPhi(X);
   end if;
   return X`EulerPhi;
 end intrinsic;
@@ -199,36 +203,102 @@ intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> Any
   return Evaluate(X, x);
 end intrinsic;
 
-function ParityWithPR(X, PR)
-  return X(PR) eq 1;
-end function;
+procedure AssignParity(X)
+  X`Parity := X(PrimitiveRoot(ResidueOrder(X))) eq 1;
+end procedure;
 
 intrinsic Parity(X :: GrpDrchFFElt) -> Bool
 { The parity of a Dirichlet character X over k(t). This returns true if X is
   even, namely that X is trivial on all elements of k. }
   if not assigned X`Parity then
-    X`Parity := ParityWithPR(X, PrimitiveRoot(ResidueOrder(X)));
+    AssignParity(X);
   end if;
   return X`Parity;
 end intrinsic;
 
-function ConductorWithPR(X, PR)
+procedure AssignConductor(X)
   S := [];
-  if not ParityWithPR(X, PR) then
+  if not Parity(X) then
     Append(~S, <1 / Variable(X), 1>);
   end if;
   if GeneratorImage(X) ne 1 then
     Append(~S, <Modulus(X), 1>);
   end if;
-  return S;
-end function;
+  X`Conductor := S;
+end procedure;
 
 intrinsic Conductor(X :: GrpDrchFFElt) -> SeqEnum[Tup]
 { The conductor of a Dirichlet character X over k(t). This returns a sequence of
   tuples of the form <M, e>, where M is either a prime element of k[t] or 1 / t,
   and the local conductor exponent e at M is a positive integer. }
   if not assigned X`Conductor then
-    X`Conductor := ConductorWithPR(X, PrimitiveRoot(ResidueOrder(X)));
+    AssignConductor(X);
   end if;
   return X`Conductor;
+end intrinsic;
+
+function EulerFactorFunc(X, v, D, P)
+  R<T> := PolynomialRing(ImageRing(X));
+  if P lt D then
+    return R ! 1;
+  end if;
+  for pair in Conductor(X) do
+    if BaseField(X) ! v eq pair[1] then
+      return R ! 1;
+    end if;
+  end for;
+  return 1 - (v eq 1 / Variable(X) select 1 / X(Variable(X)) else X(v)) * T ^ D;
+end function;
+
+intrinsic EulerFactor(X :: GrpDrchFFElt, v :: FldFunRatUElt[FldFin] :
+    Exponent := Degree(v), Precision := Infinity()) -> RngUPolElt
+{ The Euler factor L_v(X, T^D) of a Dirichlet character X over k(t) at a place v
+  of k(t), which must either be a prime element of k[t] or 1 / t, where D is
+  some Exponent. If Precision is set to be finite, then this is truncated to a
+  polynomial of degree at most Precision, By default, Exponent is set to be the
+  degree of the place associated to v and Precision is set to be infinity. }
+  require Denominator(v) eq 1 or v eq 1 / Variable(X):
+    "The place v is neither an element of k[t] nor 1 / t";
+  requirege Exponent, 0;
+  return EulerFactorFunc(X, v, Exponent, Precision);
+end intrinsic;
+
+intrinsic EulerFactor(X :: GrpDrchFFElt, v :: PlcFunElt : Exponent := Degree(v),
+    Precision := Infinity()) -> RngUPolElt
+{ The Euler factor L_v(X, T^D) of a Dirichlet character X over k(t) at a place v
+  of k(t), where D is some Exponent. If Precision is set to be finite, then this
+  is truncated to a polynomial of degree at most Precision. By default, Exponent
+  is set to be the degree of v and Precision is set to be infinity. }
+  return EulerFactor(X, BaseField(X) ! Minimum(v) : Exponent := Exponent,
+      Precision := Precision);
+end intrinsic;
+
+intrinsic EulerFactor(X :: GrpDrchFFElt : Exponent := 1,
+    Precision := Infinity()) -> RngIntElt
+{ The Euler factor L_v(X, T^D) of a Dirichlet character X over k(t) at
+  v = 1 / t, where D is some Exponent. If Precision is set to be finite, then
+  this is truncated to a polynomial of degree at most Precision. By default,
+  Exponent is set to be 1 and Precision is set to be infinity. }
+  return EulerFactor(X, 1 / Variable(X) : Exponent := 1,
+      Precision := Precision);
+end intrinsic;
+
+function EulerFactorsFunc(X, D)
+  S := [PolynomialRing(ImageRing(X)) | ];
+  if D gt 0 then
+    Append(~S, EulerFactorFunc(X, 1 / Variable(X), 1, D));
+  end if;
+  for i := 1 to D do
+    for v in AllIrreduciblePolynomials(ResidueField(X), i) do
+      Append(~S, EulerFactorFunc(X, v, Degree(v), D));
+    end for;
+  end for;
+  return S;
+end function;
+
+intrinsic EulerFactors(X :: GrpDrchFFElt, D :: RngIntElt) -> SeqEnum[RngUPolElt]
+{ The finite set of all Euler factors of a Dirichlet character X over k(t) at
+  all places of k(t) of degree at most D. }
+  requirege D, 0;
+  return EulerFactorsFunc(X, D);
 end intrinsic;
