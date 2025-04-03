@@ -64,7 +64,7 @@ intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat], v :: FldFunRatUElt[FldFin])
   non-split multiplicative, and 0 if it is additive. }
   K<t> := BaseRing(E);
   require Denominator(v) eq 1 or v eq 1 / t:
-    "The place v is neither an element of k[t] nor 1 / t";
+    "The place v is neither an element of k[t] nor 1 / t.";
   return TraceOfFrobeniusWithLI(E, LocalInformation(E), v);
 end intrinsic;
 
@@ -113,7 +113,7 @@ intrinsic EulerFactor(E :: CrvEll[FldFunRat], v :: FldFunRatUElt[FldFin] :
   the degree of the place associated to v and Precision is set to be infinity. }
   K<t> := BaseRing(E);
   require Denominator(v) eq 1 or v eq 1 / t:
-    "The place v is neither an element of k[t] nor 1 / t";
+    "The place v is neither an element of k[t] nor 1 / t.";
   requirege Exponent, 0;
   return EulerFactorWithLI(E, LocalInformation(E), v, Exponent, Precision);
 end intrinsic;
@@ -183,9 +183,9 @@ intrinsic LocalRootNumber(E :: CrvEll[FldFunRat], v :: FldFunRatUElt[FldFin])
   has not been implemented for characteristic 2 and 3. }
   K<t> := BaseRing(E);
   require Characteristic(K) gt 3:
-    "This has not been implemented for characteristic 2 and 3";
+    "This has not been implemented for characteristic 2 and 3.";
   require Denominator(v) eq 1 or v eq 1 / t:
-    "The place v is neither an element of k[t] nor 1 / t";
+    "The place v is neither an element of k[t] nor 1 / t.";
   return LocalRootNumberWithLI(E, LocalInformation(E, v));
 end intrinsic;
 
@@ -212,7 +212,7 @@ intrinsic RootNumber(E :: CrvEll[FldFunRat]) -> RngIntElt
   has not been implemented for characteristic 2 and 3. }
   K<t> := BaseRing(E);
   require Characteristic(K) gt 3:
-    "This has not been implemented for characteristic 2 and 3";
+    "This has not been implemented for characteristic 2 and 3.";
   return RootNumberWithLI(E, LocalInformation(E));
 end intrinsic;
 
@@ -229,7 +229,7 @@ end intrinsic;
 
 intrinsic LFunction_(E :: CrvEll[FldFunRat] : FunctionalEquation := true)
   -> RngUPolElt
-{ The formal L-function L(E, T) of a elliptic curve E over k(t). If E is a
+{ The formal L-function L(E, T) of an elliptic curve E over k(t). If E is a
   constant elliptic curve arising as the base change of some base elliptic
   curve E' over k, then this returns 1 / Q(T) Q(q T), where Q(T) is the
   numerator of the zeta-function of E'. Otherwise, if the FunctionalEquation
@@ -247,7 +247,7 @@ intrinsic LFunction_(E :: CrvEll[FldFunRat] : FunctionalEquation := true)
   D := LDegreeWithLI(E, LIs);
   if FunctionalEquation then
     require Characteristic(K) gt 3:
-      "This has not been implemented for characteristic 2 and 3";
+      "This has not been implemented for characteristic 2 and 3.";
     return LFunction(EulerFactorsWithLI(E, LIs, Floor(D / 2)), D :
         FunctionalEquation := true,
         EpsilonFactor := RootNumberWithLI(E, LIs) * #k ^ D,

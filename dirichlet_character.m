@@ -9,8 +9,8 @@ place at infinity 1 / t.
 declare type GrpDrchFFElt;
 
 declare attributes GrpDrchFFElt: BaseRing, BaseField, Characteristic, Conductor,
-  EulerPhi, Generator, GeneratorImage, ImageRing, Modulus, Parity, ResidueField,
-  ResidueOrder, Variable;
+  EulerPhi, Generator, GeneratorImage, ImageRing, LDegree, Modulus, Parity,
+  ResidueField, ResidueOrder, Variable;
 
 intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any, h :: Any)
   -> GrpDrchFFElt
@@ -242,8 +242,8 @@ function EulerFactorFunc(X, v, D, P)
   if P lt D then
     return R ! 1;
   end if;
-  for pair in Conductor(X) do
-    if BaseField(X) ! v eq pair[1] then
+  for M_e in Conductor(X) do
+    if BaseField(X) ! v eq M_e[1] then
       return R ! 1;
     end if;
   end for;
@@ -258,7 +258,7 @@ intrinsic EulerFactor(X :: GrpDrchFFElt, v :: FldFunRatUElt[FldFin] :
   polynomial of degree at most Precision, By default, Exponent is set to be the
   degree of the place associated to v and Precision is set to be infinity. }
   require Denominator(v) eq 1 or v eq 1 / Variable(X):
-    "The place v is neither an element of k[t] nor 1 / t";
+    "The place v is neither an element of k[t] nor 1 / t.";
   requirege Exponent, 0;
   return EulerFactorFunc(X, v, Exponent, Precision);
 end intrinsic;
@@ -301,4 +301,38 @@ intrinsic EulerFactors(X :: GrpDrchFFElt, D :: RngIntElt) -> SeqEnum[RngUPolElt]
   all places of k(t) of degree at most D. }
   requirege D, 0;
   return EulerFactorsFunc(X, D);
+end intrinsic;
+
+procedure AssignLDegree(X)
+  X`LDegree :=
+    &+[IntegerRing() | M_e[1] eq 1 / Variable(X) select 1 else Degree(M_e[1]) :
+      M_e in Conductor(X)] - 2;
+end procedure;
+
+intrinsic LDegree(X :: GrpDrchFFElt) -> RngUPolElt
+{ The value deg P(X, T) - deg Q(X, T) for a Dirichlet character X over k(t) with
+  formal L-function L(X, T) such that L(X, T) Q(X, T) = P(X, T) for some
+  univariate polynomials P(X, T) and Q(X, T) over k. }
+  if not assigned X`LDegree then
+    AssignLDegree(X);
+  end if;
+  return X`LDegree;
+end intrinsic;
+
+intrinsic LFunction(X :: GrpDrchFFElt : FunctionalEquation := false)
+  -> RngUPolElt
+{ The formal L-function L(X, T) of a Dirichlet character X over k(t). If X has
+  trivial conductor, then this returns 1 / (1 - T) (1 - q T). Otherwise, if the
+  FunctionalEquation L(X, T) = e(X) q^(d(X)) T^(d(X)) L(X, 1 / q T) is true,
+  then the necessary computation is decreased significantly. By default,
+  FunctionalEquation is set to be false, since this has not been implemented. }
+  if Conductor(X) eq [] then
+    R<T> := PolynomialRing(ImageRing(X));
+    return 1 / ((1 - T) * (1 - ResidueOrder(X) * T));
+  end if;
+  if FunctionalEquation then
+    require false: "The functional equation has not been implemented.";
+  else
+    return LFunction(EulerFactors(X, LDegree(X)), LDegree(X));
+  end if;
 end intrinsic;
