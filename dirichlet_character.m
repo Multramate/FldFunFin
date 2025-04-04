@@ -250,27 +250,20 @@ function EulerFactorFunc(X, v, D, P)
   return 1 - (v eq 1 / Variable(X) select 1 / X(Variable(X)) else X(v)) * T ^ D;
 end function;
 
-intrinsic EulerFactor(X :: GrpDrchFFElt, v :: FldFunRatUElt[FldFin] :
-    Exponent := Degree(v), Precision := Infinity()) -> RngUPolElt
+intrinsic EulerFactor(X :: GrpDrchFFElt, v :: Any : Exponent := Degree(v),
+    Precision := Infinity()) -> RngUPolElt
 { The Euler factor L_v(X, T^D) of a Dirichlet character X over k(t) at a place v
   of k(t), which must either be a prime element of k[t] or 1 / t, where D is
   some Exponent. If Precision is set to be finite, then this is truncated to a
   polynomial of degree at most Precision, By default, Exponent is set to be the
   degree of the place associated to v and Precision is set to be infinity. }
-  require Denominator(v) eq 1 or v eq 1 / Variable(X):
+  require IsCoercible(BaseField(X), v):
+    "The place v is not an element of k(t).";
+  require Denominator(BaseField(X) ! v) eq 1
+      or BaseField(X) ! v eq 1 / Variable(X):
     "The place v is neither an element of k[t] nor 1 / t.";
   requirege Exponent, 0;
   return EulerFactorFunc(X, v, Exponent, Precision);
-end intrinsic;
-
-intrinsic EulerFactor(X :: GrpDrchFFElt, v :: PlcFunElt : Exponent := Degree(v),
-    Precision := Infinity()) -> RngUPolElt
-{ The Euler factor L_v(X, T^D) of a Dirichlet character X over k(t) at a place v
-  of k(t), where D is some Exponent. If Precision is set to be finite, then this
-  is truncated to a polynomial of degree at most Precision. By default, Exponent
-  is set to be the degree of v and Precision is set to be infinity. }
-  return EulerFactor(X, BaseField(X) ! Minimum(v) : Exponent := Exponent,
-      Precision := Precision);
 end intrinsic;
 
 intrinsic EulerFactor(X :: GrpDrchFFElt : Exponent := 1,

@@ -104,29 +104,20 @@ function EulerFactorWithLI(E, LIs, v, D, P)
   return 1 - TraceOfFrobeniusWithLI(E, LIs, v) * T_D + #k ^ D * T_D ^ 2;
 end function;
 
-intrinsic EulerFactor(E :: CrvEll[FldFunRat], v :: FldFunRatUElt[FldFin] :
-    Exponent := Degree(v), Precision := Infinity()) -> RngUPolElt
+intrinsic EulerFactor(E :: CrvEll[FldFunRat], v :: Any : Exponent := Degree(v),
+    Precision := Infinity()) -> RngUPolElt
 { The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at a place v of
   k(t), which must either be a prime element of k[t] or 1 / t, where D is some
   Exponent. If Precision is set to be finite, then this is truncated to a
   polynomial of degree at most Precision, By default, Exponent is set to be
   the degree of the place associated to v and Precision is set to be infinity. }
   K<t> := BaseRing(E);
+  require IsCoercible(K, v): "The place v is not an element of k(t).";
+  v := K ! v;
   require Denominator(v) eq 1 or v eq 1 / t:
     "The place v is neither an element of k[t] nor 1 / t.";
   requirege Exponent, 0;
   return EulerFactorWithLI(E, LocalInformation(E), v, Exponent, Precision);
-end intrinsic;
-
-intrinsic EulerFactor(E :: CrvEll[FldFunRat], v :: PlcFunElt :
-    Exponent := Degree(v), Precision := Infinity()) -> RngUPolElt
-{ The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at a place v of
-  k(t), where D is some Exponent. If Precision is set to be finite, then this is
-  truncated to a polynomial of degree at most Precision. By default, Exponent is
-  set to be the degree of v and Precision is set to be infinity. }
-  K<t> := BaseRing(E);
-  return EulerFactor(E, K ! Minimum(v) : Exponent := Exponent,
-      Precision := Precision);
 end intrinsic;
 
 intrinsic EulerFactor(E :: CrvEll[FldFunRat] : Exponent := 1,
@@ -176,24 +167,18 @@ function LocalRootNumberWithLI(E, LI)
   end if;
 end function;
 
-intrinsic LocalRootNumber(E :: CrvEll[FldFunRat], v :: FldFunRatUElt[FldFin])
-  -> RngIntElt
+intrinsic LocalRootNumber(E :: CrvEll[FldFunRat], v :: Any) -> RngIntElt
 { The local root number e_v(E) of an elliptic curve E over k(t) at a place v of
   k(t), which must either be a prime element of k[t] or 1 / t. Note that this
   has not been implemented for characteristic 2 and 3. }
   K<t> := BaseRing(E);
   require Characteristic(K) gt 3:
     "This has not been implemented for characteristic 2 and 3.";
+  require IsCoercible(K, v): "The place v is not an element of k(t).";
+  v := K ! v;
   require Denominator(v) eq 1 or v eq 1 / t:
     "The place v is neither an element of k[t] nor 1 / t.";
   return LocalRootNumberWithLI(E, LocalInformation(E, v));
-end intrinsic;
-
-intrinsic LocalRootNumber(E :: CrvEll[FldFunRat], v :: PlcFunElt) -> RngIntElt
-{ The local root number e_v(E) of an elliptic curve E over k(t) at a place v of
-  k(t). Note that this has not been implemented for characteristic 2 and 3. }
-  K<t> := BaseRing(E);
-  return LocalRootNumber(E, K ! Minimum(v));
 end intrinsic;
 
 intrinsic LocalRootNumber(E :: CrvEll[FldFunRat]) -> RngIntElt
