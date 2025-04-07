@@ -1,9 +1,26 @@
 /*
 L-FUNCTIONS OF DIRICHLET CHARACTERS OVER GLOBAL FUNCTION FIELDS
 
-This file defines some intrinsics for working with Dirichlet characters over the
-global function field k(t) of the projective line over k, which has a unique
-place at infinity 1 / t.
+Let X be a Dirichlet character over a global function field K of a smooth proper
+geometrically irreducible curve of genus g over a finite field k of order q,
+with modulus a non-zero element of k[t]. The motive [X] associated to X has
+w(X) := w([X]) = 0, and its l-adic realisation is simply the complex Galois
+representation associated to X. Assume for now that M is irreducible.
+
+The conductor of X has support containing the places 1 / t and M. The place
+1 / t is ramified on X precisely when X is odd, namely when X is not trivial on
+some element of k, in which case the ramification is necessarily tame. The place
+M is ramified on X precisely when X is not trivial on a generator of the unit
+group of k[t] / M, in which case the ramification is necessarily tame. The
+complex Galois representation associated to X has geometric Galois invariants
+precisely when X has trivial conductor, in which case the formal L-function
+L(X, T) of X is precisely 1 / (1 - T) (1 - q T). In general, the local Euler
+factor L_v(X, T) of X at a place v of K is given by 1 - X(v) T, where X(v) is 0
+if X is ramified at v, and 1 if v is 1 / t and X is unramified at v.
+
+This file defines some intrinsics for working with Dirichlet characters of
+irreducible moduli over the global function field k(t) of the projective line
+over k, which has a unique place at infinity 1 / t.
 */
 
 declare type GrpDrchFFElt;
@@ -20,7 +37,7 @@ intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any, h :: Any)
   R<t> := Parent(M);
   k<u> := BaseRing(R);
   require IsIrreducible(M): "The modulus M is not a prime element of k[t].";
-  require IsCoercible(R, g): "The generator g is not a polynomial in k[t].";
+  require IsCoercible(R, g): "The generator g is not an element of k[t].";
   require IsCoercible(ComplexField(), h):
     "The element h is not a complex number.";
   X := New(GrpDrchFFElt);
@@ -33,7 +50,7 @@ end intrinsic;
 intrinsic DirichletCharacter(M :: FldFunRatUElt[FldFin], g :: Any, h :: Any)
   -> GrpDrchFFElt
 { " }
-  require Denominator(M) eq 1: "The modulus M is not a polynomial in k[t].";
+  require Denominator(M) eq 1: "The modulus M is not an element of k[t].";
   return DirichletCharacter(Numerator(M), g, h);
 end intrinsic;
 
@@ -134,7 +151,7 @@ end intrinsic;
 
 intrinsic EulerPhi(M :: FldFunRatUElt[FldFin]) -> RngIntElt
 { " }
-  require Denominator(M) eq 1: "The modulus M is not a polynomial in k[t].";
+  require Denominator(M) eq 1: "The modulus M is not an element of k[t].";
   return EulerPhi(Numerator(M));
 end intrinsic;
 
@@ -175,8 +192,8 @@ intrinsic Log(M :: RngUPolElt[FldFin], b :: Any, x :: Any) -> RngIntElt
   the smallest positive integer n such that b ^ n = x. }
   require IsIrreducible(M): "The modulus M is not a prime element of k[t].";
   R<t> := Parent(M);
-  require IsCoercible(R, b): "The base b is not a polynomial in k[t].";
-  require IsCoercible(R, x): "The element x is not a polynomial in k[t].";
+  require IsCoercible(R, b): "The base b is not an element of k[t].";
+  require IsCoercible(R, x): "The element x is not an element of k[t].";
   n := LogWithMod(M, R ! b mod M, R ! x mod M);
   require n ne -1: "The base b is not a unit of k[t] / M.";
   require n ne -2: "The element x is not a unit of k[t] / M.";
@@ -186,7 +203,7 @@ end intrinsic;
 
 intrinsic Log(M :: FldFunRatUElt[FldFin], b :: Any, x :: Any) -> RngIntElt
 { " }
-  require Denominator(M) eq 1: "The modulus M is not a polynomial in k[t].";
+  require Denominator(M) eq 1: "The modulus M is not an element of k[t].";
   return Log(Numerator(M), b, x);
 end intrinsic;
 
@@ -198,9 +215,12 @@ end function;
 
 intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> Any
 { Evaluate a Dirichlet character X over k(t) on an element x in k[t]. }
-  require IsCoercible(BaseRing(X), x):
-    "The element x is not a polynomial in k[t].";
-  return Evaluate(X, x);
+  K<t> := BaseField(X);
+  require IsCoercible(K, x): "The element x is not an element of k(t).";
+  x := K ! x;
+  require Denominator(x) eq 1 or x eq 1 / t:
+    "The element x is neither an element of k[t] nor 1 / t.";
+  return x eq 1 / t select 1 else Evaluate(X, x);
 end intrinsic;
 
 procedure AssignParity(X)
@@ -247,20 +267,20 @@ function EulerFactorFunc(X, v, D, P)
       return R ! 1;
     end if;
   end for;
-  return 1 - (v eq 1 / Variable(X) select 1 / X(Variable(X)) else X(v)) * T ^ D;
+  return 1 - X(v) * T ^ D;
 end function;
 
-intrinsic EulerFactor(X :: GrpDrchFFElt, v :: Any : Exponent := Degree(v),
+intrinsic EulerFactor(X :: GrpDrchFFElt, v :: Any : Exponent := 1,
     Precision := Infinity()) -> RngUPolElt
 { The Euler factor L_v(X, T^D) of a Dirichlet character X over k(t) at a place v
   of k(t), which must either be a prime element of k[t] or 1 / t, where D is
   some Exponent. If Precision is set to be finite, then this is truncated to a
-  polynomial of degree at most Precision, By default, Exponent is set to be the
-  degree of the place associated to v and Precision is set to be infinity. }
-  require IsCoercible(BaseField(X), v):
-    "The place v is not an element of k(t).";
-  require Denominator(BaseField(X) ! v) eq 1
-      or BaseField(X) ! v eq 1 / Variable(X):
+  polynomial of degree at most Precision, By default, Exponent is set to be 1
+  and Precision is set to be infinity. }
+  K<t> := BaseField(X);
+  require IsCoercible(K, v): "The place v is not an element of k(t).";
+  v := K ! v;
+  require Denominator(v) eq 1 or v eq 1 / t:
     "The place v is neither an element of k[t] nor 1 / t.";
   requirege Exponent, 0;
   return EulerFactorFunc(X, v, Exponent, Precision);
@@ -277,12 +297,13 @@ intrinsic EulerFactor(X :: GrpDrchFFElt : Exponent := 1,
 end intrinsic;
 
 function EulerFactorsFunc(X, D)
+  k<a> := ResidueField(X);
   S := [PolynomialRing(ImageRing(X)) | ];
   if D gt 0 then
     Append(~S, EulerFactorFunc(X, 1 / Variable(X), 1, D));
   end if;
   for i := 1 to D do
-    for v in AllIrreduciblePolynomials(ResidueField(X), i) do
+    for v in AllIrreduciblePolynomials(k, i) do
       Append(~S, EulerFactorFunc(X, v, Degree(v), D));
     end for;
   end for;
@@ -297,8 +318,8 @@ intrinsic EulerFactors(X :: GrpDrchFFElt, D :: RngIntElt) -> SeqEnum[RngUPolElt]
 end intrinsic;
 
 procedure AssignLDegree(X)
-  X`LDegree :=
-    &+[IntegerRing() | M_e[1] eq 1 / Variable(X) select 1 else Degree(M_e[1]) :
+  t := Variable(X);
+  X`LDegree := &+[IntegerRing() | M_e[1] eq 1 / t select 1 else Degree(M_e[1]) :
       M_e in Conductor(X)] - 2;
 end procedure;
 
@@ -326,6 +347,7 @@ intrinsic LFunction(X :: GrpDrchFFElt : FunctionalEquation := false)
   if FunctionalEquation then
     require false: "The functional equation has not been implemented.";
   else
-    return LFunction(EulerFactors(X, LDegree(X)), LDegree(X));
+    D := LDegree(X);
+    return LFunction(EulerFactors(X, D), D);
   end if;
 end intrinsic;

@@ -104,13 +104,13 @@ function EulerFactorWithLI(E, LIs, v, D, P)
   return 1 - TraceOfFrobeniusWithLI(E, LIs, v) * T_D + #k ^ D * T_D ^ 2;
 end function;
 
-intrinsic EulerFactor(E :: CrvEll[FldFunRat], v :: Any : Exponent := Degree(v),
+intrinsic EulerFactor(E :: CrvEll[FldFunRat], v :: Any : Exponent := 1,
     Precision := Infinity()) -> RngUPolElt
 { The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at a place v of
   k(t), which must either be a prime element of k[t] or 1 / t, where D is some
   Exponent. If Precision is set to be finite, then this is truncated to a
-  polynomial of degree at most Precision, By default, Exponent is set to be
-  the degree of the place associated to v and Precision is set to be infinity. }
+  polynomial of degree at most Precision, By default, Exponent is set to be 1
+  and Precision is set to be infinity. }
   K<t> := BaseRing(E);
   require IsCoercible(K, v): "The place v is not an element of k(t).";
   v := K ! v;
