@@ -3,7 +3,7 @@ L-FUNCTIONS OF DIRICHLET CHARACTERS OVER GLOBAL FUNCTION FIELDS
 
 Let X be a Dirichlet character over a global function field K of a smooth proper
 geometrically irreducible curve of genus g over a finite field k of order q,
-with modulus a non-zero element of k[t]. The motive [X] associated to X has
+with modulus a non-zero element M of k[t]. The motive [X] associated to X has
 w(X) := w([X]) = 0, and its l-adic realisation is simply the complex Galois
 representation associated to X. Assume for now that M is irreducible.
 
@@ -18,9 +18,10 @@ L(X, T) of X is precisely 1 / (1 - T) (1 - q T). In general, the local Euler
 factor L_v(X, T) of X at a place v of K is given by 1 - X(v) T, where X(v) is 0
 if X is ramified at v, and 1 if v is 1 / t and X is unramified at v.
 
-This file defines some intrinsics for working with Dirichlet characters of
-irreducible moduli over the global function field k(t) of the projective line
-over k, which has a unique place at infinity 1 / t.
+This file defines some intrinsics that compute the formal L-function of a
+Dirichlet character of irreducible moduli over the global function field k(t) of
+the projective line over k, which has a unique place at infinity 1 / t. This
+includes the type of Dirichlet characters and local and global Euler factors.
 */
 
 declare type GrpDrchFFElt;
@@ -180,7 +181,7 @@ function LogWithMod(M, b, x)
       return -1; // the base b is not a unit of k[t] / M
     end if;
     if b_n eq 1 then
-      return -3; // there are no positive integers n such that b ^ n = x
+      return -3; // there are no positive integers n such that b^n = x
     end if;
   end for;
   return -2; // the element x is not a unit of k[t] / M
@@ -189,7 +190,7 @@ end function;
 intrinsic Log(M :: RngUPolElt[FldFin], b :: Any, x :: Any) -> RngIntElt
 { The discrete logarithm log_b(x) for a base b and an element x in k[t] that are
   units when reduced modulo a non-zero irreducible modulus M in k[t]. This is
-  the smallest positive integer n such that b ^ n = x. }
+  the smallest positive integer n such that b^n = x. }
   require IsIrreducible(M): "The modulus M is not a prime element of k[t].";
   R<t> := Parent(M);
   require IsCoercible(R, b): "The base b is not an element of k[t].";
@@ -197,7 +198,7 @@ intrinsic Log(M :: RngUPolElt[FldFin], b :: Any, x :: Any) -> RngIntElt
   n := LogWithMod(M, R ! b mod M, R ! x mod M);
   require n ne -1: "The base b is not a unit of k[t] / M.";
   require n ne -2: "The element x is not a unit of k[t] / M.";
-  require n ne -3: "There are no positive integers n such that b ^ n = x.";
+  require n ne -3: "There are no positive integers n such that b^n = x.";
   return n;
 end intrinsic;
 
@@ -213,18 +214,8 @@ function Evaluate(X, x)
     GeneratorImage(X) ^ Log(M, Generator(X), x);
 end function;
 
-intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> Any
-{ Evaluate a Dirichlet character X over k(t) on an element x in k[t]. }
-  K<t> := BaseField(X);
-  require IsCoercible(K, x): "The element x is not an element of k(t).";
-  x := K ! x;
-  require Denominator(x) eq 1 or x eq 1 / t:
-    "The element x is neither an element of k[t] nor 1 / t.";
-  return x eq 1 / t select 1 else Evaluate(X, x);
-end intrinsic;
-
 procedure AssignParity(X)
-  X`Parity := X(PrimitiveRoot(ResidueOrder(X))) eq 1;
+  X`Parity := Evaluate(X, PrimitiveRoot(ResidueOrder(X))) eq 1;
 end procedure;
 
 intrinsic Parity(X :: GrpDrchFFElt) -> Bool
@@ -234,6 +225,16 @@ intrinsic Parity(X :: GrpDrchFFElt) -> Bool
     AssignParity(X);
   end if;
   return X`Parity;
+end intrinsic;
+
+intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> Any
+{ Evaluate a Dirichlet character X over k(t) on an element x in k[t]. }
+  K<t> := BaseField(X);
+  require IsCoercible(K, x): "The element x is not an element of k(t).";
+  x := K ! x;
+  require Denominator(x) eq 1 or x eq 1 / t:
+    "The element x is neither an element of k[t] nor 1 / t.";
+  return x eq 1 / t select (Parity(X) select 1 else 0) else Evaluate(X, x);
 end intrinsic;
 
 procedure AssignConductor(X)
@@ -262,11 +263,6 @@ function EulerFactorFunc(X, v, D, P)
   if P lt D then
     return R ! 1;
   end if;
-  for M_e in Conductor(X) do
-    if BaseField(X) ! v eq M_e[1] then
-      return R ! 1;
-    end if;
-  end for;
   return 1 - X(v) * T ^ D;
 end function;
 

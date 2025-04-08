@@ -19,7 +19,7 @@ reduction is split multiplicative, -1 if it is non-split multiplicative, and 0
 if it is additive, in which case L_v(E, T) is given by 1 - a_v(E) T.
 
 It remains to compute the global root number e(E) := e(h^1(E)(1)) of E for the
-functional equation L(E, T) = e(E) q^d(E) T^d(E) L(E, 1 / q^2 T), where
+functional equation L(E, T) = e(E) q^(d(E)) T^(d(E)) L(E, 1 / q^2 T), where
 d(E) := d(h^1(E)(1)) is (4 g - 4) + deg f(h^1(E)(1)). This is the product of
 local root numbers e_v(E) of the places v of K where E has bad reduction, with
 explicit formulae in terms of Kronecker symbols (-, q_v) when the characteristic
@@ -56,8 +56,8 @@ function TraceOfFrobeniusWithLI(E, LIs, v)
   return 1 - #EllipticCurve(invariants) + #BaseRing(K);
 end function;
 
-intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat], v :: FldFunRatUElt[FldFin])
-  -> RngIntElt
+intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat[FldFin]],
+    v :: FldFunRatUElt[FldFin]) -> RngIntElt
 { The trace of Frobenius a_v(E) for the reduction of an elliptic curve E over
   k(t) at a place v of k(t), which must either be a prime element of k[t] or
   1 / t. Note that this returns 1 if it is split multiplicative, -1 if it is
@@ -68,7 +68,7 @@ intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat], v :: FldFunRatUElt[FldFin])
   return TraceOfFrobeniusWithLI(E, LocalInformation(E), v);
 end intrinsic;
 
-intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat], v :: PlcFunElt) -> RngIntElt
+intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat[FldFin]], v :: PlcFunElt) -> RngIntElt
 { The trace of Frobenius a_v(E) for the reduction of an elliptic curve E over
   k(t) at a place v of k(t). Note that this returns 1 if it is split
   multiplicative, -1 if it is non-split multiplicative, and 0 if it is
@@ -77,7 +77,7 @@ intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat], v :: PlcFunElt) -> RngIntElt
   return TraceOfFrobenius(E, K ! Minimum(v));
 end intrinsic;
 
-intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat]) -> RngIntElt
+intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat[FldFin]]) -> RngIntElt
 { The trace of Frobenius a_v(E) for the reduction of an elliptic curve E over
   k(t) at v = 1 / t. Note that this returns 1 if it is split multiplicative, -1
   if it is non-split multiplicative, and 0 if it is additive. }
@@ -104,12 +104,12 @@ function EulerFactorWithLI(E, LIs, v, D, P)
   return 1 - TraceOfFrobeniusWithLI(E, LIs, v) * T_D + #k ^ D * T_D ^ 2;
 end function;
 
-intrinsic EulerFactor(E :: CrvEll[FldFunRat], v :: Any : Exponent := 1,
+intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]], v :: Any : Exponent := 1,
     Precision := Infinity()) -> RngUPolElt
 { The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at a place v of
   k(t), which must either be a prime element of k[t] or 1 / t, where D is some
   Exponent. If Precision is set to be finite, then this is truncated to a
-  polynomial of degree at most Precision, By default, Exponent is set to be 1
+  polynomial of degree at most Precision. By default, Exponent is set to be 1
   and Precision is set to be infinity. }
   K<t> := BaseRing(E);
   require IsCoercible(K, v): "The place v is not an element of k(t).";
@@ -120,8 +120,8 @@ intrinsic EulerFactor(E :: CrvEll[FldFunRat], v :: Any : Exponent := 1,
   return EulerFactorWithLI(E, LocalInformation(E), v, Exponent, Precision);
 end intrinsic;
 
-intrinsic EulerFactor(E :: CrvEll[FldFunRat] : Exponent := 1,
-    Precision := Infinity()) -> RngIntElt
+intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]] : Exponent := 1,
+    Precision := Infinity()) -> RngUPolElt
 { The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at v = 1 / t,
   where D is some Exponent. If Precision is set to be finite, then this is
   truncated to a polynomial of degree at most Precision. By default, Exponent is
@@ -145,7 +145,7 @@ function EulerFactorsWithLI(E, LIs, D)
   return S;
 end function;
 
-intrinsic EulerFactors(E :: CrvEll[FldFunRat], D :: RngIntElt)
+intrinsic EulerFactors(E :: CrvEll[FldFunRat[FldFin]], D :: RngIntElt)
   -> SeqEnum[RngUPolElt]
 { The finite set of all Euler factors of an elliptic curve E over k(t) at all
   places of k(t) of degree at most D. }
@@ -167,7 +167,7 @@ function LocalRootNumberWithLI(E, LI)
   end if;
 end function;
 
-intrinsic LocalRootNumber(E :: CrvEll[FldFunRat], v :: Any) -> RngIntElt
+intrinsic LocalRootNumber(E :: CrvEll[FldFunRat[FldFin]], v :: Any) -> RngIntElt
 { The local root number e_v(E) of an elliptic curve E over k(t) at a place v of
   k(t), which must either be a prime element of k[t] or 1 / t. Note that this
   has not been implemented for characteristic 2 and 3. }
@@ -181,7 +181,7 @@ intrinsic LocalRootNumber(E :: CrvEll[FldFunRat], v :: Any) -> RngIntElt
   return LocalRootNumberWithLI(E, LocalInformation(E, v));
 end intrinsic;
 
-intrinsic LocalRootNumber(E :: CrvEll[FldFunRat]) -> RngIntElt
+intrinsic LocalRootNumber(E :: CrvEll[FldFunRat[FldFin]]) -> RngIntElt
 { The local root number e_v(E) of an elliptic curve E over k(t) at v = 1 / t.
   Note that this has not been implemented for characteristic 2 and 3. }
   K<t> := BaseRing(E);
@@ -192,7 +192,7 @@ function RootNumberWithLI(E, LIs)
   return &*[IntegerRing() | LocalRootNumberWithLI(E, LI) : LI in LIs];
 end function;
 
-intrinsic RootNumber(E :: CrvEll[FldFunRat]) -> RngIntElt
+intrinsic RootNumber(E :: CrvEll[FldFunRat[FldFin]]) -> RngIntElt
 { The global root number e(E) of an elliptic curve E over k(t). Note that this
   has not been implemented for characteristic 2 and 3. }
   K<t> := BaseRing(E);
@@ -205,15 +205,15 @@ function LDegreeWithLI(E, LIs)
   return &+[IntegerRing() | Degree(LI[1]) * LI[3] : LI in LIs] - 4;
 end function;
 
-intrinsic LDegree(E :: CrvEll[FldFunRat]) -> RngUPolElt
+intrinsic LDegree(E :: CrvEll[FldFunRat[FldFin]]) -> RngUPolElt
 { The value deg P(E, T) - deg Q(E, T) for an elliptic curve E over k(t) with
   formal L-function L(E, T) such that L(E, T) Q(E, T) = P(E, T) for some
   univariate polynomials P(E, T) and Q(E, T) over k. }
   return LDegreeWithLI(E, LocalInformation(E));
 end intrinsic;
 
-intrinsic LFunction_(E :: CrvEll[FldFunRat] : FunctionalEquation := true)
-  -> RngUPolElt
+intrinsic LFunction_(E :: CrvEll[FldFunRat[FldFin]] :
+    FunctionalEquation := true) -> RngUPolElt
 { The formal L-function L(E, T) of an elliptic curve E over k(t). If E is a
   constant elliptic curve arising as the base change of some base elliptic
   curve E' over k, then this returns 1 / Q(T) Q(q T), where Q(T) is the
