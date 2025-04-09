@@ -68,7 +68,8 @@ intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat[FldFin]],
   return TraceOfFrobeniusWithLI(E, LocalInformation(E), v);
 end intrinsic;
 
-intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat[FldFin]], v :: PlcFunElt) -> RngIntElt
+intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat[FldFin]], v :: PlcFunElt)
+  -> RngIntElt
 { The trace of Frobenius a_v(E) for the reduction of an elliptic curve E over
   k(t) at a place v of k(t). Note that this returns 1 if it is split
   multiplicative, -1 if it is non-split multiplicative, and 0 if it is

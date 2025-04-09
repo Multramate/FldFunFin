@@ -215,7 +215,7 @@ function Evaluate(X, x)
 end function;
 
 procedure AssignParity(X)
-  X`Parity := Evaluate(X, PrimitiveRoot(ResidueOrder(X))) eq 1;
+  X`Parity := Evaluate(X, PrimitiveElement(ResidueField(X))) eq 1;
 end procedure;
 
 intrinsic Parity(X :: GrpDrchFFElt) -> Bool
@@ -333,7 +333,7 @@ intrinsic LFunction(X :: GrpDrchFFElt : FunctionalEquation := false)
   -> RngUPolElt
 { The formal L-function L(X, T) of a Dirichlet character X over k(t). If X has
   trivial conductor, then this returns 1 / (1 - T) (1 - q T). Otherwise, if the
-  FunctionalEquation L(X, T) = e(X) q^(d(X)) T^(d(X)) L(X, 1 / q T) is true,
+  FunctionalEquation L(X, T) = e(X) q^(d(X) / 2) T^(d(X)) L(X, 1 / q T) is true,
   then the necessary computation is decreased significantly. By default,
   FunctionalEquation is set to be false, since this has not been implemented. }
   if Conductor(X) eq [] then

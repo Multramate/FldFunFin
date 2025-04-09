@@ -20,3 +20,53 @@ elliptic curve twisted by a Dirichlet character of irreducible moduli over the
 global function field k(t) of the projective line over k, which has a unique
 place at infinity 1 / t.
 */
+
+import "elliptic_curve.m": TraceOfFrobeniusWithLI;
+
+function EulerFactorWithLI_(E, X, LIs, v, D, P);
+  R<T> := PolynomialRing(ImageRing(X));
+  q := ResidueOrder(X);
+  if P lt D then
+    return R ! 1;
+  end if;
+  T_D := T ^ D;
+  if P lt 2 * D then
+    return 1 - TraceOfFrobeniusWithLI(E, LIs, v) * X(v) * T_D;
+  end if;
+  K<t> := BaseRing(E);
+  k<a> := BaseRing(K);
+  for LI in LIs do
+    if K ! v eq Minimum(LI[1]) then
+      return 1 - TraceOfFrobeniusWithLI(E, LIs, v) * X(v) * T_D;
+    end if;
+  end for;
+  return 1 - TraceOfFrobeniusWithLI(E, LIs, v) * X(v) * T_D
+    + q ^ D * X(v) ^ 2 * T_D ^ 2;
+end function;
+
+intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt,
+    v :: Any : Exponent := 1, Precision := Infinity()) -> RngUPolElt
+{ The Euler factor L_v(E, X, T^D) of an elliptic curve E over k(t) twisted by a
+  Dirichlet character at a place v of k(t), which must either be a prime element
+  of k[t] or 1 / t, where D is some Exponent. If Precision is set to be finite,
+  then this is truncated to a polynomial of degree at most Precision. By
+  default, Exponent is set to be 1 and Precision is set to be infinity. }
+  K<t> := BaseField(X);
+  require IsCoercible(K, v): "The place v is not an element of k(t).";
+  v := K ! v;
+  require Denominator(v) eq 1 or v eq 1 / t:
+    "The place v is neither an element of k[t] nor 1 / t.";
+  requirege Exponent, 0;
+  return EulerFactorWithLI_(E, X, LocalInformation(E), v, Exponent, Precision);
+end intrinsic;
+
+intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt :
+    Exponent := 1, Precision := Infinity()) -> RngUPolElt
+{ The Euler factor L_v(E, X, T^D) of an elliptic curve E over k(t) twisted by a
+  Dirichlet character at v = 1 / t, where D is some Exponent. If Precision is
+  set to be finite, then this is truncated to a polynomial of degree at most
+  Precision. By default, Exponent is set to be 1 and Precision is set to be
+  infinity. }
+  return EulerFactor(E, X, 1 / Variable(X) : Exponent := 1,
+      Precision := Precision);
+end intrinsic;
