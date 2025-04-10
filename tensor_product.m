@@ -18,7 +18,7 @@ polynomial of degree d(E x X) equal to 2d(X) + d(E) - 4.
 This file defines some intrinsics that compute the formal L-function of an
 elliptic curve twisted by a Dirichlet character of irreducible moduli over the
 global function field k(t) of the projective line over k, which has a unique
-place at infinity 1 / t.
+place at infinity 1 / t. This includes local Euler factors.
 */
 
 import "elliptic_curve.m": TraceOfFrobeniusWithLI;
@@ -69,4 +69,27 @@ intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt :
   infinity. }
   return EulerFactor(E, X, 1 / Variable(X) : Exponent := 1,
       Precision := Precision);
+end intrinsic;
+
+function EulerFactorsWithLI_(E, X, LIs, D)
+  K<t> := BaseField(X);
+  k<a> := ResidueField(X);
+  S := [PolynomialRing(ImageRing(X)) | ];
+  if D gt 0 then
+    Append(~S, EulerFactorWithLI_(E, X, LIs, 1 / t, 1, D));
+  end if;
+  for i := 1 to D do
+    for v in AllIrreduciblePolynomials(k, i) do
+      Append(~S, EulerFactorWithLI_(E, X, LIs, K ! v, Degree(v), D));
+    end for;
+  end for;
+  return S;
+end function;
+
+intrinsic EulerFactors(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt,
+    D :: RngIntElt) -> SeqEnum[RngUPolElt]
+{ The finite set of all Euler factors of an elliptic curve E over k(t) twisted
+  by a Dirichlet character at all places of k(t) of degree at most D. }
+  requirege D, 0;
+  return EulerFactorsWithLI_(E, X, LocalInformation(E), D);
 end intrinsic;

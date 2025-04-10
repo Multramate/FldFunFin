@@ -33,7 +33,7 @@ if it is non-split multiplicative, and (-1, q_v) if it is additive.
 This file defines some intrinsics that compute the formal L-function of an
 elliptic curve over the global function field k(t) of the projective line over
 k, which has a unique place at infinity 1 / t. This includes generalised traces
-of Frobenius, local and global Euler factors, and local and global root numbers.
+of Frobenius, local Euler factors, and local and global root numbers.
 */
 
 function TraceOfFrobeniusWithLI(E, LIs, v)

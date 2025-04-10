@@ -21,7 +21,7 @@ if X is ramified at v, and 1 if v is 1 / t and X is unramified at v.
 This file defines some intrinsics that compute the formal L-function of a
 Dirichlet character of irreducible moduli over the global function field k(t) of
 the projective line over k, which has a unique place at infinity 1 / t. This
-includes the type of Dirichlet characters and local and global Euler factors.
+includes the type of Dirichlet characters and local Euler factors.
 */
 
 declare type GrpDrchFFElt;
