@@ -1,5 +1,4 @@
-/*
-MOTIVIC L-FUNCTIONS OVER GLOBAL FUNCTION FIELDS
+/* MOTIVIC L-FUNCTIONS OVER GLOBAL FUNCTION FIELDS
 
 Let M be a motive with coefficients in the global function field K of a smooth
 proper geometrically irreducible curve of genus g over a finite field of order

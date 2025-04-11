@@ -1,5 +1,4 @@
-/*
-L-FUNCTIONS OF DIRICHLET TWISTS OF ELLIPTIC CURVES OVER GLOBAL FUNCTION FIELDS
+/* L-FUNCTIONS OF DIRICHLET TWISTED ELLIPTIC CURVES OVER GLOBAL FUNCTION FIELDS
 
 Let E be an elliptic curve over a global function field K of a smooth proper
 geometrically irreducible curve of genus g over a finite field k of order q, and
@@ -21,7 +20,7 @@ global function field k(t) of the projective line over k, which has a unique
 place at infinity 1 / t. This includes local Euler factors.
 */
 
-import "elliptic_curve.m": TraceOfFrobeniusWithLI;
+import "elliptic_curve.m": TraceOfFrobeniusWithLI, LDegreeWithLI;
 
 function EulerFactorWithLI_(E, X, LIs, v, D, P);
   R<T> := PolynomialRing(ImageRing(X));
@@ -47,26 +46,36 @@ end function;
 intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt,
     v :: Any : Exponent := 1, Precision := Infinity()) -> RngUPolElt
 { The Euler factor L_v(E, X, T^D) of an elliptic curve E over k(t) twisted by a
-  Dirichlet character at a place v of k(t), which must either be a prime element
-  of k[t] or 1 / t, where D is some Exponent. If Precision is set to be finite,
-  then this is truncated to a polynomial of degree at most Precision. By
-  default, Exponent is set to be 1 and Precision is set to be infinity. }
+  Dirichlet character X at a place v of k(t), which must either be a prime
+  element of k[t] or 1 / t, assuming that v is not a bad place for both of E and
+  X, where D is some Exponent. If Precision is set to be finite, then this is
+  truncated to a polynomial of degree at most Precision. By default, Exponent is
+  set to be 1 and Precision is set to be infinity. }
   K<t> := BaseField(X);
   require IsCoercible(K, v): "The place v is not an element of k(t).";
   v := K ! v;
   require Denominator(v) eq 1 or v eq 1 / t:
     "The place v is neither an element of k[t] nor 1 / t.";
   requirege Exponent, 0;
-  return EulerFactorWithLI_(E, X, LocalInformation(E), v, Exponent, Precision);
+  LIs := LocalInformation(E);
+  for LI in LIs do
+    if K ! v eq Minimum(LI[1]) then
+      for M_e in Conductor(X) do
+        require v ne M_e[1]: "The place v is bad for both of E and X.";
+      end for;
+      break LI;
+    end if;
+  end for;
+  return EulerFactorWithLI_(E, X, LIs, v, Exponent, Precision);
 end intrinsic;
 
 intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt :
     Exponent := 1, Precision := Infinity()) -> RngUPolElt
 { The Euler factor L_v(E, X, T^D) of an elliptic curve E over k(t) twisted by a
-  Dirichlet character at v = 1 / t, where D is some Exponent. If Precision is
-  set to be finite, then this is truncated to a polynomial of degree at most
-  Precision. By default, Exponent is set to be 1 and Precision is set to be
-  infinity. }
+  Dirichlet character X at v = 1 / t, assuming that v is not a bad place for
+  both of E and X, where D is some Exponent. If Precision is set to be finite,
+  then this is truncated to a polynomial of degree at most Precision. By
+  default, Exponent is set to be 1 and Precision is set to be infinity. }
   return EulerFactor(E, X, 1 / Variable(X) : Exponent := 1,
       Precision := Precision);
 end intrinsic;
@@ -89,7 +98,61 @@ end function;
 intrinsic EulerFactors(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt,
     D :: RngIntElt) -> SeqEnum[RngUPolElt]
 { The finite set of all Euler factors of an elliptic curve E over k(t) twisted
-  by a Dirichlet character at all places of k(t) of degree at most D. }
+  by a Dirichlet character X, assuming that the conductors of E and X have
+  disjoint support, at all places of k(t) of degree at most D. }
   requirege D, 0;
-  return EulerFactorsWithLI_(E, X, LocalInformation(E), D);
+  LIs := LocalInformation(E);
+  for LI in LIs do
+    for M_e in Conductor(X) do
+      require Minimum(LI[1]) ne M_e[1]:
+        "The conductors of E and X do not have disjoint support.";
+    end for;
+  end for;
+  return EulerFactorsWithLI_(E, X, LIs, D);
+end intrinsic;
+
+function LDegreeWithLI_(E, X, LIs)
+  return 2 * LDegree(X) + LDegreeWithLI(E, LIs) + 4;
+end function;
+
+intrinsic LDegree(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt)
+  -> RngUPolElt
+{ The value deg P(E, X, T) - deg Q(E, X, T) for an elliptic curve E over k(t)
+  twisted by a Dirichlet character X, assuming that the conductors of E and X
+  have disjoint support, with formal L-function L(E, X, T) such that
+  L(E, X, T) Q(E, X, T) = P(E, X, T) for some univariate polynomials P(E, X, T)
+  and Q(E, X, T) over k. }
+  LIs := LocalInformation(E);
+  for LI in LIs do
+    for M_e in Conductor(X) do
+      require Minimum(LI[1]) ne M_e[1]:
+        "The conductors of E and X do not have disjoint support.";
+    end for;
+  end for;
+  return LDegreeWithLI_(E, X, LIs);
+end intrinsic;
+
+intrinsic LFunction(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt :
+    FunctionalEquation := false) -> RngUPolElt
+{ The formal L-function L(E, X, T) of an elliptic curve E over k(t) twisted by a
+  Dirichlet character X, assuming that the conductors of E and X have disjoint
+  support and are not both trivial. If the FunctionalEquation
+  L(E, X, T) = e(E, X) q^(d(E, X)) T^(d(E, X)) L(E, X, 1 / q^2 T) is true, then
+  the necessary computation is decreased significantly. By default,
+  FunctionalEquation is set to be false, since this has not been implemented. }
+  LIs := LocalInformation(E);
+  require LIs ne [] or Conductor(X) ne []:
+    "The conductors of E and X are both trivial.";
+  for LI in LIs do
+    for M_e in Conductor(X) do
+      require Minimum(LI[1]) ne M_e[1]:
+        "The conductors of E and X do not have disjoint support.";
+    end for;
+  end for;
+  if FunctionalEquation then
+    require false: "The functional equation has not been implemented.";
+  else
+    D := LDegree(E, X);
+    return LFunction(EulerFactorsWithLI_(E, X, LIs, D), D);
+  end if;
 end intrinsic;

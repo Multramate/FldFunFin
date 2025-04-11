@@ -1,5 +1,4 @@
-/*
-L-FUNCTIONS OF DIRICHLET CHARACTERS OVER GLOBAL FUNCTION FIELDS
+/* L-FUNCTIONS OF DIRICHLET CHARACTERS OVER GLOBAL FUNCTION FIELDS
 
 Let X be a Dirichlet character over a global function field K of a smooth proper
 geometrically irreducible curve of genus g over a finite field k of order q,

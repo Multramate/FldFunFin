@@ -1,5 +1,4 @@
-/*
-L-FUNCTIONS OF ELLIPTIC CURVES OVER GLOBAL FUNCTION FIELDS
+/* L-FUNCTIONS OF ELLIPTIC CURVES OVER GLOBAL FUNCTION FIELDS
 
 Let E be an elliptic curve over a global function field K of a smooth proper
 geometrically irreducible curve of genus g over a finite field k of order q. The
