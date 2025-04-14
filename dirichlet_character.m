@@ -26,8 +26,8 @@ includes the type of Dirichlet characters and local Euler factors.
 declare type GrpDrchFFElt;
 
 declare attributes GrpDrchFFElt: BaseRing, BaseField, Characteristic, Conductor,
-  EulerPhi, Generator, GeneratorImage, ImageRing, LDegree, Modulus, Parity,
-  ResidueField, ResidueOrder, Variable;
+  EulerPhi, Generator, GeneratorImage, ImageRing, IsEven, IsOdd, LDegree,
+  Modulus, ResidueField, ResidueOrder, Variable;
 
 intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any, h :: Any)
   -> GrpDrchFFElt
@@ -214,16 +214,26 @@ function Evaluate(X, x)
 end function;
 
 procedure AssignParity(X)
-  X`Parity := Evaluate(X, PrimitiveElement(ResidueField(X))) eq 1;
+  X`IsEven := Evaluate(X, PrimitiveElement(ResidueField(X))) eq 1;
+  X`IsOdd := not X`IsEven;
 end procedure;
 
-intrinsic Parity(X :: GrpDrchFFElt) -> Bool
+intrinsic IsEven(X :: GrpDrchFFElt) -> Bool
 { The parity of a Dirichlet character X over k(t). This returns true if X is
   even, namely that X is trivial on all elements of k. }
-  if not assigned X`Parity then
+  if not assigned X`IsEven then
     AssignParity(X);
   end if;
-  return X`Parity;
+  return X`IsEven;
+end intrinsic;
+
+intrinsic IsOdd(X :: GrpDrchFFElt) -> Bool
+{ The parity of a Dirichlet character X over k(t). This returns true if X is
+  odd, namely that X is not trivial on some element of k. }
+  if not assigned X`IsOdd then
+    AssignParity(X);
+  end if;
+  return X`IsOdd;
 end intrinsic;
 
 intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> Any
@@ -233,12 +243,12 @@ intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> Any
   x := K ! x;
   require Denominator(x) eq 1 or x eq 1 / t:
     "The element x is neither an element of k[t] nor 1 / t.";
-  return x eq 1 / t select (Parity(X) select 1 else 0) else Evaluate(X, x);
+  return x eq 1 / t select (IsEven(X) select 1 else 0) else Evaluate(X, x);
 end intrinsic;
 
 procedure AssignConductor(X)
   S := [];
-  if not Parity(X) then
+  if IsOdd(X) then
     Append(~S, <1 / Variable(X), 1>);
   end if;
   if GeneratorImage(X) ne 1 then
@@ -310,6 +320,27 @@ intrinsic EulerFactors(X :: GrpDrchFFElt, D :: RngIntElt) -> SeqEnum[RngUPolElt]
   all places of k(t) of degree at most D. }
   requirege D, 0;
   return EulerFactorsFunc(X, D);
+end intrinsic;
+
+function HayesExponential(x)
+  R<t> := Parent(x);
+  K<z> := CyclotomicField(Characteristic(R));
+  x := hom<R -> R | 1 / t>(x);
+  numerator := Numerator(x);
+  denominator := Denominator(x);
+  return z ^ IntegerRing() !
+      Trace(Coefficient(numerator, 1) * Coefficient(denominator, 0)
+        - Coefficient(numerator, 0) * Coefficient(denominator, 1));
+end function;
+
+intrinsic GaussSum(X :: GrpDrchFFElt) -> Any
+{ The Gauss sum of a Dirichlet character X over k(t). This is the sum of X(x) of
+  all elements x in k[t] of degree at most the degree of the modulus M of X,
+  weighted by the Hayes exponential function of x / M. }
+  M := Modulus(X);
+  polynomials := [BaseRing(X) ! s :
+      s in Subsequences(Set(ResidueField(X)), Degree(M))];
+  return &+[ImageRing(X) | X(x) * HayesExponential(x / M) : x in polynomials];
 end intrinsic;
 
 procedure AssignLDegree(X)
