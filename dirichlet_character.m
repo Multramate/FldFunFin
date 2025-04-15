@@ -322,25 +322,19 @@ intrinsic EulerFactors(X :: GrpDrchFFElt, D :: RngIntElt) -> SeqEnum[RngUPolElt]
   return EulerFactorsFunc(X, D);
 end intrinsic;
 
-function HayesExponential(x)
-  R<t> := Parent(x);
-  K<z> := CyclotomicField(Characteristic(R));
-  x := hom<R -> R | 1 / t>(x);
-  numerator := Numerator(x);
-  denominator := Denominator(x);
-  return z ^ IntegerRing() !
-      Trace(Coefficient(numerator, 1) * Coefficient(denominator, 0)
-        - Coefficient(numerator, 0) * Coefficient(denominator, 1));
+function GaussSumOfRF(X)
+  K<z> := CyclotomicField(Characteristic(X));
+  return &+[X(x) * z ^ IntegerRing() ! Trace(x) : x in ResidueField(X)];
 end function;
 
 intrinsic GaussSum(X :: GrpDrchFFElt) -> Any
 { The Gauss sum of a Dirichlet character X over k(t). This is the sum of X(x) of
   all elements x in k[t] of degree at most the degree of the modulus M of X,
   weighted by the Hayes exponential function of x / M. }
-  M := Modulus(X);
-  polynomials := [BaseRing(X) ! s :
-      s in Subsequences(Set(ResidueField(X)), Degree(M))];
-  return &+[ImageRing(X) | X(x) * HayesExponential(x / M) : x in polynomials];
+  R<t> := BaseRing(X);
+  D := Degree(Modulus(X)) - 1;
+  return (IsEven(X) select -ResidueOrder(X) else GaussSumOfRF(X))
+      * &+[X(t ^ D + R ! s) : s in Subsequences(Set(ResidueField(X)), D)];
 end intrinsic;
 
 procedure AssignLDegree(X)
