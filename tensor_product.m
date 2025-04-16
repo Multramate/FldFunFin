@@ -23,7 +23,7 @@ place at infinity 1 / t. This includes local Euler factors.
 import "elliptic_curve.m": TraceOfFrobeniusWithLI, LDegreeWithLI;
 
 function EulerFactorWithLI_(E, X, LIs, v, D, P);
-  R<T> := PolynomialRing(ImageRing(X));
+  R<T> := PolynomialRing(Codomain(X));
   q := ResidueOrder(X);
   if P lt D then
     return R ! 1;
@@ -51,7 +51,7 @@ intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt,
   X, where D is some Exponent. If Precision is set to be finite, then this is
   truncated to a polynomial of degree at most Precision. By default, Exponent is
   set to be 1 and Precision is set to be infinity. }
-  K<t> := BaseField(X);
+  K<t> := Domain(X);
   require IsCoercible(K, v): "The place v is not an element of k(t).";
   v := K ! v;
   require Denominator(v) eq 1 or v eq 1 / t:
@@ -81,9 +81,9 @@ intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt :
 end intrinsic;
 
 function EulerFactorsWithLI_(E, X, LIs, D)
-  K<t> := BaseField(X);
+  K<t> := Domain(X);
   k<a> := ResidueField(X);
-  S := [PolynomialRing(ImageRing(X)) | ];
+  S := [PolynomialRing(Codomain(X)) | ];
   if D gt 0 then
     Append(~S, EulerFactorWithLI_(E, X, LIs, 1 / t, 1, D));
   end if;
