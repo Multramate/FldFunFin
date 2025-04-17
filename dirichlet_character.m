@@ -23,117 +23,6 @@ the projective line over k, which has a unique place at infinity 1 / t. This
 includes the type of Dirichlet characters and local Euler factors.
 */
 
-declare type GrpDrchFFElt;
-
-declare attributes GrpDrchFFElt: BaseRing, Characteristic, Conductor, Domain,
-  EulerPhi, Generator, Image, Codomain, IsEven, IsOdd, LDegree, Modulus,
-  ResidueCharacter, ResidueCodomain, ResidueField, ResidueGenerator,
-  ResidueImage, ResidueOrder;
-
-intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any, h :: Any)
-  -> GrpDrchFFElt
-{ The Dirichlet character over k(t) of modulus a non-zero irreducible polynomial
-  M in k[t], given by mapping an element g in k[t] that is a unit and a
-  generator when reduced modulo M, to an element h that is a complex number. }
-  require IsIrreducible(M): "The modulus M is not a prime element of k[t].";
-  require IsCoercible(Parent(M), g):
-    "The generator g is not an element of k[t].";
-  require IsCoercible(ComplexField(), h):
-    "The element h is not a complex number.";
-  X := New(GrpDrchFFElt);
-  X`Generator := g;
-  X`Image := h;
-  X`Modulus := M;
-  return X;
-end intrinsic;
-
-intrinsic DirichletCharacter(M :: FldFunRatUElt[FldFin], g :: Any, h :: Any)
-  -> GrpDrchFFElt
-{ " }
-  require Denominator(M) eq 1: "The modulus M is not an element of k[t].";
-  return DirichletCharacter(Numerator(M), g, h);
-end intrinsic;
-
-intrinsic BaseRing(X :: GrpDrchFFElt) -> RngUPol[FldFin]
-{ The base ring k[t] of a Dirichlet character X over k(t). }
-  if not assigned X`BaseRing then
-    X`BaseRing := Parent(X`Modulus);
-  end if;
-  return X`BaseRing;
-end intrinsic;
-
-intrinsic Domain(X :: GrpDrchFFElt) -> FldFunRat[FldFin]
-{ The domain k(t) of a Dirichlet character X over k(t). }
-  if not assigned X`Domain then
-    X`Domain := FieldOfFractions(BaseRing(X));
-  end if;
-  return X`Domain;
-end intrinsic;
-
-intrinsic Characteristic(X :: GrpDrchFFElt) -> RngIntElt
-{ The characteristic char(k(t)) of a Dirichlet character X over k(t). }
-  if not assigned X`Characteristic then
-    X`Characteristic := Characteristic(BaseRing(X));
-  end if;
-  return X`Characteristic;
-end intrinsic;
-
-intrinsic Generator(X :: GrpDrchFFElt) -> RngUPolResElt[FldFin]
-{ The generator that defines a Dirichlet character X over k(t). }
-  return X`Generator;
-end intrinsic;
-
-intrinsic Image(X :: GrpDrchFFElt) -> Any
-{ The image of the generator that defines a Dirichlet character X over k(t). }
-  return X`Image;
-end intrinsic;
-
-intrinsic Codomain(X :: GrpDrchFFElt) -> Any
-{ The codomain of a Dirichlet character X over k(t). }
-  if not assigned X`Codomain then
-    X`Codomain := Parent(Image(X));
-  end if;
-  return X`Codomain;
-end intrinsic;
-
-intrinsic Modulus(X :: GrpDrchFFElt) -> RngUPolElt[FldFin]
-{ The modulus of a Dirichlet character X over k(t). }
-  return X`Modulus;
-end intrinsic;
-
-intrinsic ResidueField(X :: GrpDrchFFElt) -> FldFin
-{ The residue field k of a Dirichlet character X over k(t). }
-  if not assigned X`ResidueField then
-    X`ResidueField := BaseRing(BaseRing(X));
-  end if;
-  return X`ResidueField;
-end intrinsic;
-
-intrinsic ResidueGenerator(X :: GrpDrchFFElt) -> Any
-{ The generator of the residue field k of a Dirichlet character X over k(t) that
-  defines the character over k associated to X. }
-  if not assigned X`ResidueGenerator then
-    X`ResidueGenerator := PrimitiveElement(ResidueField(X));
-  end if;
-  return X`ResidueGenerator;
-end intrinsic;
-
-intrinsic ResidueOrder(X :: GrpDrchFFElt) -> RngIntElt
-{ The order #k of the residue field k of a Dirichlet character X over k(t). }
-  if not assigned X`ResidueOrder then
-    X`ResidueOrder := #ResidueField(X);
-  end if;
-  return X`ResidueOrder;
-end intrinsic;
-
-intrinsic Print(X :: GrpDrchFFElt)
-{ Print a Dirichlet character X over k(t). }
-  K<t> := Domain(X);
-  printf
-    "Dirichlet character over F_%o(%o) of modulus %o given by mapping %o to %o",
-    ResidueOrder(X), t, Modulus(X), K ! Generator(X), Image(X);
-end intrinsic;
-
 function EulerPhiWithF(FM)
   q := #BaseRing(Universe(FM)[1]);
   phi := 1;
@@ -147,7 +36,7 @@ end function;
 intrinsic EulerPhi(M :: RngUPolElt[FldFin]) -> RngIntElt
 { The Euler totient function Phi(M) over k(t) for a non-zero modulus M in k[t].
   This is the order of the unit group of k[t] / M. }
-  require M ne 0: "The modulus M is the zero polynomial in k[t].";
+  require M ne 0: "The modulus M is the zero polynomial of k[t].";
   return EulerPhiWithF(Factorization(Numerator(M)));
 end intrinsic;
 
@@ -155,15 +44,6 @@ intrinsic EulerPhi(M :: FldFunRatUElt[FldFin]) -> RngIntElt
 { " }
   require Denominator(M) eq 1: "The modulus M is not an element of k[t].";
   return EulerPhi(Numerator(M));
-end intrinsic;
-
-intrinsic EulerPhi(X :: GrpDrchFFElt) -> RngIntElt
-{ The Euler totient function Phi(M) of a Dirichlet character X over k(t) of a
-  non-zero modulus M in k[t]. This is the order of the unit group of k[t] / M. }
-  if not assigned X`EulerPhi then
-    X`EulerPhi := EulerPhi(Modulus(X));
-  end if;
-  return X`EulerPhi;
 end intrinsic;
 
 function LogWithMod(M, b, x)
@@ -185,7 +65,7 @@ function LogWithMod(M, b, x)
 end function;
 
 intrinsic Log(M :: RngUPolElt[FldFin], b :: Any, x :: Any) -> RngIntElt
-{ The discrete logarithm log_b(x) for a base b and an element x in k[t] that are
+{ The discrete logarithm log_b(x) for a base b and an element x of k[t] that are
   units when reduced modulo a non-zero irreducible modulus M in k[t]. This is
   the smallest non-negative integer n such that b^n = x. }
   require IsIrreducible(M): "The modulus M is not a prime element of k[t].";
@@ -205,14 +85,190 @@ intrinsic Log(M :: FldFunRatUElt[FldFin], b :: Any, x :: Any) -> RngIntElt
   return Log(Numerator(M), b, x);
 end intrinsic;
 
+declare type GrpDrchFFElt;
+
+declare attributes GrpDrchFFElt: Modulus, Generator, Image,
+  BaseRing, Characteristic, Codomain, Domain, EulerPhi, Order,
+  ResidueDegree, ResidueField, ResidueGenerator, ResidueSize,
+  ResidueImage, ResidueCodomain, ResidueCharacter, ResidueOrder,
+  IsEven, IsOdd, ResidueGaussSum, GaussSum, Conductor, LDegree, LFunction;
+
+intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any, h :: FldCycElt :
+    Minimal := false) -> GrpDrchFFElt
+{ The Dirichlet character over k(t) of modulus a non-zero irreducible polynomial
+  M of k[t], given by mapping an element g of k[t] that is a unit and a
+  generator when reduced modulo M, to an element h in some cyclotomic field,
+  which can be made Minimal. By default, Minimal is set to be false. }
+  require IsIrreducible(M): "The modulus M is not a prime element of k[t].";
+  require IsCoercible(Parent(M), g):
+    "The generator g is not an element of k[t].";
+  X := New(GrpDrchFFElt);
+  X`Modulus := M;
+  X`Generator := g;
+  if Minimal then
+    X`EulerPhi := EulerPhi(M);
+    h := Minimise(CyclotomicField(X`EulerPhi) ! h);
+  end if;
+  X`Image := h;
+  return X;
+end intrinsic;
+
+intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any,
+    h :: FldRatElt : Minimal := false) -> GrpDrchFFElt
+{ " }
+  return DirichletCharacter(M, g, CyclotomicField(1) ! h : Minimal := Minimal);
+end intrinsic;
+
+intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any,
+    h :: RngIntElt : Minimal := false) -> GrpDrchFFElt
+{ " }
+  return DirichletCharacter(M, g, CyclotomicField(1) ! h : Minimal := Minimal);
+end intrinsic;
+
+intrinsic DirichletCharacter(M :: FldFunRatUElt[FldFin], g :: Any,
+    h :: FldCycElt : Minimal := false) -> GrpDrchFFElt
+{ " }
+  require Denominator(M) eq 1: "The modulus M is not an element of k[t].";
+  return DirichletCharacter(Numerator(M), g, h : Minimal := Minimal);
+end intrinsic;
+
+intrinsic DirichletCharacter(M :: FldFunRatUElt[FldFin], g :: Any,
+    h :: FldRatElt : Minimal := false) -> GrpDrchFFElt
+{ " }
+  return DirichletCharacter(M, g, CyclotomicField(1) ! h : Minimal := Minimal);
+end intrinsic;
+
+intrinsic DirichletCharacter(M :: FldFunRatUElt[FldFin], g :: Any,
+    h :: RngIntElt : Minimal := false) -> GrpDrchFFElt
+{ " }
+  return DirichletCharacter(M, g, CyclotomicField(1) ! h : Minimal := Minimal);
+end intrinsic;
+
+intrinsic Modulus(X :: GrpDrchFFElt) -> RngUPolElt[FldFin]
+{ The modulus of a Dirichlet character X over k(t). }
+  return X`Modulus;
+end intrinsic;
+
+intrinsic Generator(X :: GrpDrchFFElt) -> RngUPolResElt[FldFin]
+{ The generator that defines a Dirichlet character X over k(t). }
+  return X`Generator;
+end intrinsic;
+
+intrinsic Image(X :: GrpDrchFFElt) -> FldCycElt
+{ The image of the generator that defines a Dirichlet character X over k(t). }
+  return X`Image;
+end intrinsic;
+
+intrinsic Minimise(X :: GrpDrchFFElt) -> GrpDrchFFElt
+{ The same Dirichlet character X over k(t), but whose image of generator is
+  coerced to its minimal cyclotomic field. }
+  return DirichletCharacter(Modulus(X), Generator(X), Image(X) :
+      Minimal := true);
+end intrinsic;
+
+intrinsic Minimise(~X :: GrpDrchFFElt)
+{ " }
+  X := Minimise(X);
+end intrinsic;
+
+intrinsic BaseRing(X :: GrpDrchFFElt) -> RngUPol[FldFin]
+{ The base ring k[t] of a Dirichlet character X over k(t). }
+  if not assigned X`BaseRing then
+    X`BaseRing := Parent(Modulus(X));
+  end if;
+  return X`BaseRing;
+end intrinsic;
+
+intrinsic Characteristic(X :: GrpDrchFFElt) -> RngIntElt
+{ The characteristic char(k(t)) of a Dirichlet character X over k(t). }
+  if not assigned X`Characteristic then
+    X`Characteristic := Characteristic(BaseRing(X));
+  end if;
+  return X`Characteristic;
+end intrinsic;
+
+intrinsic Codomain(X :: GrpDrchFFElt) -> FldCyc
+{ The codomain of a Dirichlet character X over k(t). }
+  if not assigned X`Codomain then
+    X`Codomain := Parent(Image(X));
+  end if;
+  return X`Codomain;
+end intrinsic;
+
+intrinsic Domain(X :: GrpDrchFFElt) -> FldFunRat[FldFin]
+{ The domain k(t) of a Dirichlet character X over k(t). }
+  if not assigned X`Domain then
+    X`Domain := FieldOfFractions(BaseRing(X));
+  end if;
+  return X`Domain;
+end intrinsic;
+
+intrinsic EulerPhi(X :: GrpDrchFFElt) -> RngIntElt
+{ The Euler totient function Phi(M) of a Dirichlet character X over k(t) of a
+  non-zero modulus M in k[t]. This is the order of the unit group of k[t] / M. }
+  if not assigned X`EulerPhi then
+    X`EulerPhi := EulerPhi(Modulus(X));
+  end if;
+  return X`EulerPhi;
+end intrinsic;
+
+intrinsic Order(X :: GrpDrchFFElt) -> RngIntElt
+{ The order of a Dirichlet character X over k(t) in its character group. }
+  if not assigned X`Order then
+    X`Order := CyclotomicOrder(Codomain(Minimise(X)));
+  end if;
+  return X`Order;
+end intrinsic;
+
+intrinsic ResidueDegree(X :: GrpDrchFFElt) -> RngIntElt
+{ The degree of the modulus of a Dirichlet character X over k(t). }
+  if not assigned X`ResidueDegree then
+    X`ResidueDegree := Degree(Modulus(X));
+  end if;
+  return X`ResidueDegree;
+end intrinsic;
+
+intrinsic ResidueField(X :: GrpDrchFFElt) -> FldFin
+{ The residue field k of a Dirichlet character X over k(t). }
+  if not assigned X`ResidueField then
+    X`ResidueField := BaseRing(BaseRing(X));
+  end if;
+  return X`ResidueField;
+end intrinsic;
+
+intrinsic ResidueGenerator(X :: GrpDrchFFElt) -> FldFinElt
+{ The generator of the residue field k of a Dirichlet character X over k(t) that
+  defines the character over k associated to X. }
+  if not assigned X`ResidueGenerator then
+    X`ResidueGenerator := PrimitiveElement(ResidueField(X));
+  end if;
+  return X`ResidueGenerator;
+end intrinsic;
+
+intrinsic ResidueSize(X :: GrpDrchFFElt) -> RngIntElt
+{ The size #k of the residue field k of a Dirichlet character X over k(t). }
+  if not assigned X`ResidueSize then
+    X`ResidueSize := #ResidueField(X);
+  end if;
+  return X`ResidueSize;
+end intrinsic;
+
+intrinsic Print(X :: GrpDrchFFElt)
+{ The printing of a Dirichlet character X over k(t). }
+  K<t> := Domain(X);
+  printf
+    "Dirichlet character over F_%o(%o) of modulus %o given by mapping %o to %o",
+    ResidueSize(X), t, Modulus(X), K ! Generator(X), Image(X);
+end intrinsic;
+
 function Evaluate(X, x)
   M := Modulus(X);
   return BaseRing(X) ! x mod M eq 0 select 0 else
     Image(X) ^ Log(M, Generator(X), x);
 end function;
 
-intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> Any
-{ Evaluate a Dirichlet character X over k(t) on an element x in k[t]. }
+intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> FldCycElt
+{ The evaluation of a Dirichlet character X over k(t) on an element x of k[t]. }
   K<t> := Domain(X);
   require IsCoercible(K, x): "The element x is not an element of k(t).";
   x := K ! x;
@@ -221,37 +277,40 @@ intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> Any
   return x eq 1 / t select (IsEven(X) select 1 else 0) else Evaluate(X, x);
 end intrinsic;
 
-function ResidueImageFunc(X)
-  image := X(ResidueGenerator(X));
-  C<z> := CyclotomicField(ResidueOrder(X) - 1);
-  if IsCoercible(C, image) then
-    image := Minimise(C ! image);
-  end if;
-  return image;
-end function;
-
-intrinsic ResidueImage(X :: GrpDrchFFElt) -> Any
+intrinsic ResidueImage(X :: GrpDrchFFElt) -> FldCycElt
 { The image of the generator of the residue field k of a Dirichlet character X
-  over k(t) that defines the character over k associated to X. }
+  over k(t) that defines the character over k associated to X. Note that this
+  image is coerced to its minimal cyclotomic field. }
   if not assigned X`ResidueImage then
-    X`ResidueImage := ResidueImageFunc(X);
+    X`ResidueImage := Minimise(X(ResidueGenerator(X)));
   end if;
   return X`ResidueImage;
 end intrinsic;
 
-intrinsic ResidueCodomain(X :: GrpDrchFFElt) -> Any
+intrinsic ResidueCodomain(X :: GrpDrchFFElt) -> FldCyc
 { The minimal codomain of the character over k associated to a Dirichlet
-  character X over k(t), which is a subfield of the codomain of X. }
+  character X over k(t). This is a subfield of the codomain of X. }
   if not assigned X`ResidueCodomain then
     X`ResidueCodomain := Parent(ResidueImage(X));
   end if;
   return X`ResidueCodomain;
 end intrinsic;
 
+intrinsic ResidueOrder(X :: GrpDrchFFElt) -> RngIntElt
+{ The order of the character over k associated to a Dirichlet character X over
+  k(t) in its character group. }
+  if not assigned X`ResidueOrder then
+    X`ResidueOrder := CyclotomicOrder(ResidueCodomain(X));
+  end if;
+  return X`ResidueOrder;
+end intrinsic;
+
 intrinsic ResidueCharacter(X :: GrpDrchFFElt) -> GrpDrchFFElt
-{ The character over k associated to a Dirichlet character X over k(t). }
+{ The character over k associated to a Dirichlet character X over k(t). This
+  is a Dirichlet character over k(t) of modulus t - 1, whose image of generator
+  is coerced to its minimal cyclotomic field. }
   if not assigned X`ResidueCharacter then
-    X`ResidueCharacter := DirichletCharacter(BaseRing(X).1 - 1,
+    X`ResidueCharacter := DirichletCharacter(Domain(X).1 - 1,
         ResidueGenerator(X), ResidueImage(X));
   end if;
   return X`ResidueCharacter;
@@ -275,10 +334,43 @@ intrinsic IsOdd(X :: GrpDrchFFElt) -> Bool
   return X`IsOdd;
 end intrinsic;
 
+function ResidueGaussSumFunc(X)
+  C<z> := CyclotomicField(Characteristic(X));
+  return &+[ResidueCharacter(X)(x) * z ^ IntegerRing() ! Trace(x) :
+      x in ResidueField(X) | x ne 0];
+end function;
+
+intrinsic ResidueGaussSum(X :: GrpDrchFFElt) -> FldCycElt
+{ The Gauss sum of the character over k associated to a Dirichlet character X
+  over k(t) of characteristic p. This is the sum of X(x) of all non-zero
+  elements x of k, weighted by p-th roots of unity raised to the trace of x. }
+  if not assigned X`ResidueGaussSum then
+    X`ResidueGaussSum := ResidueGaussSumFunc(X);
+  end if;
+  return X`ResidueGaussSum;
+end intrinsic;
+
+function GaussSumFunc(X)
+  K<t> := Domain(X);
+  D := Degree(Modulus(X)) - 1;
+  return (IsEven(X) select -ResidueSize(X) else ResidueGaussSum(X))
+    * &+[X(t ^ D + K ! s) : s in Subsequences(Set(ResidueField(X)), D)];
+end function;
+
+intrinsic GaussSum(X :: GrpDrchFFElt) -> FldCycElt
+{ The Gauss sum of a Dirichlet character X over k(t) of a non-zero modulus M in
+  k[t]. This is the sum of X(x) of all elements x of k[t] of degree at most the
+  degree of M, weighted by the Hayes exponential function of x / M. }
+  if not assigned X`GaussSum then
+    X`GaussSum := GaussSumFunc(X);
+  end if;
+  return X`GaussSum;
+end intrinsic;
+
 function ConductorFunc(X)
   S := [];
   if IsOdd(X) then
-    Append(~S, <1 / BaseRing(X).1, 1>);
+    Append(~S, <1 / Domain(X).1, 1>);
   end if;
   if Image(X) ne 1 then
     Append(~S, <Modulus(X), 1>);
@@ -326,7 +418,7 @@ intrinsic EulerFactor(X :: GrpDrchFFElt : Exponent := 1,
   v = 1 / t, where D is some Exponent. If Precision is set to be finite, then
   this is truncated to a polynomial of degree at most Precision. By default,
   Exponent is set to be 1 and Precision is set to be infinity. }
-  return EulerFactor(X, 1 / BaseRing(X).1 : Exponent := 1,
+  return EulerFactor(X, 1 / Domain(X).1 : Exponent := 1,
       Precision := Precision);
 end intrinsic;
 
@@ -334,7 +426,7 @@ function EulerFactorsFunc(X, D)
   k<a> := ResidueField(X);
   S := [PolynomialRing(Codomain(X)) | ];
   if D gt 0 then
-    Append(~S, EulerFactorFunc(X, 1 / BaseRing(X).1, 1, D));
+    Append(~S, EulerFactorFunc(X, 1 / Domain(X).1, 1, D));
   end if;
   for i := 1 to D do
     for v in AllIrreduciblePolynomials(k, i) do
@@ -351,34 +443,26 @@ intrinsic EulerFactors(X :: GrpDrchFFElt, D :: RngIntElt) -> SeqEnum[RngUPolElt]
   return EulerFactorsFunc(X, D);
 end intrinsic;
 
-function GaussSumOfRF(X)
-  C<z> := CyclotomicField(Characteristic(X));
-  return &+[ResidueCharacter(X)(x) * z ^ IntegerRing() ! Trace(x) :
-      x in ResidueField(X)];
-end function;
-
-intrinsic GaussSum(X :: GrpDrchFFElt) -> Any
-{ The Gauss sum of a Dirichlet character X over k(t). This is the sum of X(x) of
-  all elements x in k[t] of degree at most the degree of the modulus M of X,
-  weighted by the Hayes exponential function of x / M. }
-  K<t> := Domain(X);
-  D := Degree(Modulus(X)) - 1;
-  return (IsEven(X) select -ResidueOrder(X) else GaussSumOfRF(X))
-    * &+[Codomain(X) |
-      X(t ^ D + K ! s) : s in Subsequences(Set(ResidueField(X)), D)];
-end intrinsic;
-
 intrinsic LDegree(X :: GrpDrchFFElt) -> RngIntElt
 { The value deg P(X, T) - deg Q(X, T) for a Dirichlet character X over k(t) with
   formal L-function L(X, T) such that L(X, T) Q(X, T) = P(X, T) for some
   univariate polynomials P(X, T) and Q(X, T) over k. }
   if not assigned X`LDegree then
     X`LDegree := &+[IntegerRing() |
-        M_e[1] eq 1 / BaseRing(X).1 select 1 else Degree(M_e[1]) :
+        M_e[1] eq 1 / Domain(X).1 select 1 else Degree(M_e[1]) :
         M_e in Conductor(X)] - 2;
   end if;
   return X`LDegree;
 end intrinsic;
+
+function LFunctionFunc(X)
+  if Conductor(X) eq [] then
+    R<T> := PolynomialRing(Codomain(X));
+    return 1 / ((1 - T) * (1 - ResidueSize(X) * T));
+  end if;
+  D := LDegree(X);
+  return LFunction(EulerFactors(X, D), D);
+end function;
 
 intrinsic LFunction(X :: GrpDrchFFElt : FunctionalEquation := false)
   -> RngUPolElt
@@ -387,14 +471,10 @@ intrinsic LFunction(X :: GrpDrchFFElt : FunctionalEquation := false)
   FunctionalEquation L(X, T) = e(X) q^(d(X) / 2) T^(d(X)) L(X, 1 / q T) is true,
   then the necessary computation is decreased significantly. By default,
   FunctionalEquation is set to be false, since this has not been implemented. }
-  if Conductor(X) eq [] then
-    R<T> := PolynomialRing(Codomain(X));
-    return 1 / ((1 - T) * (1 - ResidueOrder(X) * T));
+  require not FunctionalEquation:
+    "The functional equation has not been implemented.";
+  if not assigned X`LFunction then
+    X`LFunction := LFunctionFunc(X);
   end if;
-  if FunctionalEquation then
-    require false: "The functional equation has not been implemented.";
-  else
-    D := LDegree(X);
-    return LFunction(EulerFactors(X, D), D);
-  end if;
+  return X`LFunction;
 end intrinsic;
