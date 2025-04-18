@@ -24,7 +24,7 @@ import "elliptic_curve.m": TraceOfFrobeniusWithLI, LDegreeWithLI;
 
 function EulerFactorWithLI_(E, X, LIs, v, D, P);
   R<T> := PolynomialRing(Codomain(X));
-  q := ResidueOrder(X);
+  q := ResidueSize(X);
   if P lt D then
     return R ! 1;
   end if;
@@ -76,7 +76,7 @@ intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt :
   both of E and X, where D is some Exponent. If Precision is set to be finite,
   then this is truncated to a polynomial of degree at most Precision. By
   default, Exponent is set to be 1 and Precision is set to be infinity. }
-  return EulerFactor(E, X, 1 / Variable(X) : Exponent := 1,
+  return EulerFactor(E, X, 1 / Domain(X).1 : Exponent := 1,
       Precision := Precision);
 end intrinsic;
 

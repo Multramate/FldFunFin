@@ -367,6 +367,17 @@ intrinsic GaussSum(X :: GrpDrchFFElt) -> FldCycElt
   return X`GaussSum;
 end intrinsic;
 
+function NormalisedGaussSumFunc(X)
+  q_f := ResidueSize(X) ^ ResidueDegree(X);
+  return ComplexField() ! GaussSum(X)
+    / (Image(X) eq 1 select q_f else Sqrt(q_f));
+end function;
+
+intrinsic NormalisedGaussSum(X :: GrpDrchFFElt) -> FldComElt
+{ The modulus of the Gauss sum of a Dirichlet character X over k(t). }
+  return NormalisedGaussSumFunc(X);
+end intrinsic;
+
 function ConductorFunc(X)
   S := [];
   if IsOdd(X) then
