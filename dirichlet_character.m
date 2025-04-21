@@ -23,6 +23,13 @@ the projective line over k, which has a unique place at infinity 1 / t. This
 includes the type of Dirichlet characters and local Euler factors.
 */
 
+intrinsic AllMonicPolynomials(k :: FldFin, D :: RngIntElt)
+  -> SetEnum[RngUPolElt]
+{ The set of all monic polynomials over a finite field k of degree D. }
+  R<t> := PolynomialRing(k);
+  return {t ^ D + R ! s : s in Subsequences(Set(k), D)};
+end intrinsic;
+
 function EulerPhiWithF(FM)
   q := #BaseRing(Universe(FM)[1]);
   phi := 1;
@@ -91,7 +98,8 @@ declare attributes GrpDrchFFElt: Modulus, Generator, Image,
   BaseRing, Characteristic, Codomain, Domain, EulerPhi, Order,
   ResidueDegree, ResidueField, ResidueGenerator, ResidueSize,
   ResidueImage, ResidueCodomain, ResidueCharacter, ResidueOrder,
-  IsEven, IsOdd, ResidueGaussSum, GaussSum, Conductor, LDegree, LFunction;
+  IsEven, IsOdd, ResidueGaussSum, GaussSum, RootNumber,
+  Conductor, LDegree, LFunction;
 
 intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any, h :: FldCycElt :
     Minimal := false) -> GrpDrchFFElt
@@ -277,6 +285,10 @@ intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> FldCycElt
   return x eq 1 / t select (IsEven(X) select 1 else 0) else Evaluate(X, x);
 end intrinsic;
 
+function EvaluateSum(X, D)
+  return &+[X(f) : f in AllMonicPolynomials(ResidueField(X), D)];
+end function;
+
 intrinsic ResidueImage(X :: GrpDrchFFElt) -> FldCycElt
 { The image of the generator of the residue field k of a Dirichlet character X
   over k(t) that defines the character over k associated to X. Note that this
@@ -350,32 +362,31 @@ intrinsic ResidueGaussSum(X :: GrpDrchFFElt) -> FldCycElt
   return X`ResidueGaussSum;
 end intrinsic;
 
-function GaussSumFunc(X)
-  K<t> := Domain(X);
-  D := Degree(Modulus(X)) - 1;
-  return (IsEven(X) select -ResidueSize(X) else ResidueGaussSum(X))
-    * &+[X(t ^ D + K ! s) : s in Subsequences(Set(ResidueField(X)), D)];
-end function;
-
 intrinsic GaussSum(X :: GrpDrchFFElt) -> FldCycElt
 { The Gauss sum of a Dirichlet character X over k(t) of a non-zero modulus M in
   k[t]. This is the sum of X(x) of all elements x of k[t] of degree at most the
   degree of M, weighted by the Hayes exponential function of x / M. }
   if not assigned X`GaussSum then
-    X`GaussSum := GaussSumFunc(X);
+    X`GaussSum := EvaluateSum(X, ResidueDegree(X) - 1)
+      * IsEven(X) select -ResidueSize(X) else ResidueGaussSum(X);
   end if;
   return X`GaussSum;
 end intrinsic;
 
-function NormalisedGaussSumFunc(X)
-  q_f := ResidueSize(X) ^ ResidueDegree(X);
-  return ComplexField() ! GaussSum(X)
-    / (Image(X) eq 1 select q_f else Sqrt(q_f));
+function RootNumberFunc(X)
+  q := ResidueSize(X);
+  rad_q := Squarefree(q);
+  C<z> := CyclotomicField(rad_q * (rad_q mod 4 eq 1 select 1 else 4));
+  root := EvaluateSum(X, ResidueDegree(X) - 1) / Sqrt(C ! q) ^ LDegree(X);
+  return IsEven(X) select -root else root;
 end function;
 
-intrinsic NormalisedGaussSum(X :: GrpDrchFFElt) -> FldComElt
-{ The modulus of the Gauss sum of a Dirichlet character X over k(t). }
-  return NormalisedGaussSumFunc(X);
+intrinsic RootNumber(X :: GrpDrchFFElt) -> FldCycElt
+{ The global root number e(X) of a Dirichlet character X over k(t). }
+  if not assigned X`RootNumber then
+    X`RootNumber := RootNumberFunc(X);
+  end if;
+  return X`RootNumber;
 end intrinsic;
 
 function ConductorFunc(X)
