@@ -96,10 +96,9 @@ declare type GrpDrchFFElt;
 
 declare attributes GrpDrchFFElt: Modulus, Generator, Image,
   BaseRing, Characteristic, Codomain, Domain, EulerPhi, Order,
-  ResidueDegree, ResidueField, ResidueGenerator, ResidueSize,
+  ResidueDegree, ResidueField, ResidueGenerator, ResidueSize, SqrtResidueSize,
   ResidueImage, ResidueCodomain, ResidueCharacter, ResidueOrder,
-  IsEven, IsOdd, ResidueGaussSum, GaussSum, RootNumber,
-  Conductor, LDegree, LFunction;
+  IsEven, IsOdd, ResidueGaussSum, GaussSum, RootNumber, Conductor, LDegree;
 
 intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any, h :: FldCycElt :
     Minimal := false) -> GrpDrchFFElt
@@ -261,6 +260,21 @@ intrinsic ResidueSize(X :: GrpDrchFFElt) -> RngIntElt
   return X`ResidueSize;
 end intrinsic;
 
+function SqrtResidueSizeFunc(X)
+  q := ResidueSize(X);
+  rad_q := Squarefree(q);
+  return Sqrt(CyclotomicField(rad_q * (rad_q mod 4 eq 1 select 1 else 4)) ! q);
+end function;
+
+intrinsic SqrtResidueSize(X :: GrpDrchFFElt) -> FldCycElt
+{ The square root of the size #k of the residue field k of a Dirichlet character
+  X over k(t) in its minimal cyclotomic field. }
+  if not assigned X`SqrtResidueSize then
+    X`SqrtResidueSize := SqrtResidueSizeFunc(X);
+  end if;
+  return X`SqrtResidueSize;
+end intrinsic;
+
 intrinsic Print(X :: GrpDrchFFElt)
 { The printing of a Dirichlet character X over k(t). }
   K<t> := Domain(X);
@@ -373,18 +387,11 @@ intrinsic GaussSum(X :: GrpDrchFFElt) -> FldCycElt
   return X`GaussSum;
 end intrinsic;
 
-function RootNumberFunc(X)
-  q := ResidueSize(X);
-  rad_q := Squarefree(q);
-  C<z> := CyclotomicField(rad_q * (rad_q mod 4 eq 1 select 1 else 4));
-  root := EvaluateSum(X, ResidueDegree(X) - 1) / Sqrt(C ! q) ^ LDegree(X);
-  return IsEven(X) select -root else root;
-end function;
-
 intrinsic RootNumber(X :: GrpDrchFFElt) -> FldCycElt
 { The global root number e(X) of a Dirichlet character X over k(t). }
   if not assigned X`RootNumber then
-    X`RootNumber := RootNumberFunc(X);
+    X`RootNumber := (IsEven(X) select -1 else 1)
+      * EvaluateSum(X, ResidueDegree(X) - 1) / SqrtResidueSize(X) ^ LDegree(X);
   end if;
   return X`RootNumber;
 end intrinsic;
@@ -477,26 +484,25 @@ intrinsic LDegree(X :: GrpDrchFFElt) -> RngIntElt
   return X`LDegree;
 end intrinsic;
 
-function LFunctionFunc(X)
+function LFunctionFunc(X, FunctionalEquation)
   if Conductor(X) eq [] then
     R<T> := PolynomialRing(Codomain(X));
     return 1 / ((1 - T) * (1 - ResidueSize(X) * T));
   end if;
   D := LDegree(X);
-  return LFunction(EulerFactors(X, D), D);
+  return FunctionalEquation select
+    LFunction(EulerFactors(X, Floor(D / 2)), D : FunctionalEquation := true,
+      EpsilonFactor := RootNumber(X) * SqrtResidueSize(X) ^ D,
+      WeightFactor := 1 / ResidueSize(X), DualAutomorphism := ComplexConjugate)
+    else LFunction(EulerFactors(X, D), D);
 end function;
 
 intrinsic LFunction(X :: GrpDrchFFElt : FunctionalEquation := false)
   -> RngUPolElt
 { The formal L-function L(X, T) of a Dirichlet character X over k(t). If X has
   trivial conductor, then this returns 1 / (1 - T) (1 - q T). Otherwise, if the
-  FunctionalEquation L(X, T) = e(X) q^(d(X) / 2) T^(d(X)) L(X, 1 / q T) is true,
-  then the necessary computation is decreased significantly. By default,
-  FunctionalEquation is set to be false, since this has not been implemented. }
-  require not FunctionalEquation:
-    "The functional equation has not been implemented.";
-  if not assigned X`LFunction then
-    X`LFunction := LFunctionFunc(X);
-  end if;
-  return X`LFunction;
+  FunctionalEquation L(X, T) = e(X) q^(d(X) / 2) T^(d(X)) L(X, 1 / q T)-bar is
+  true, then the necessary computation may be decreased. By default,
+  FunctionalEquation is set to be false. }
+  return LFunctionFunc(X, FunctionalEquation);
 end intrinsic;
