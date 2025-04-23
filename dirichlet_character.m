@@ -98,7 +98,8 @@ declare attributes GrpDrchFFElt: Modulus, Generator, Image,
   BaseRing, Characteristic, Codomain, Domain, EulerPhi, Order,
   ResidueDegree, ResidueField, ResidueGenerator, ResidueSize, SqrtResidueSize,
   ResidueImage, ResidueCodomain, ResidueCharacter, ResidueOrder,
-  IsEven, IsOdd, ResidueGaussSum, GaussSum, RootNumber, Conductor, LDegree;
+  IsEven, IsOdd, CharacterSum, ResidueGaussSum, GaussSum, RootNumber,
+  Conductor, LDegree;
 
 intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any, h :: FldCycElt :
     Minimal := false) -> GrpDrchFFElt
@@ -222,13 +223,14 @@ end intrinsic;
 intrinsic Order(X :: GrpDrchFFElt) -> RngIntElt
 { The order of a Dirichlet character X over k(t) in its character group. }
   if not assigned X`Order then
-    X`Order := CyclotomicOrder(Codomain(Minimise(X)));
+    X`Order := Conductor(Codomain(Minimise(X)));
   end if;
   return X`Order;
 end intrinsic;
 
 intrinsic ResidueDegree(X :: GrpDrchFFElt) -> RngIntElt
-{ The degree of the modulus of a Dirichlet character X over k(t). }
+{ The residue degree deg(M) of a Dirichlet character X over k(t) of a non-zero
+  modulus M in k[t]. }
   if not assigned X`ResidueDegree then
     X`ResidueDegree := Degree(Modulus(X));
   end if;
@@ -260,21 +262,6 @@ intrinsic ResidueSize(X :: GrpDrchFFElt) -> RngIntElt
   return X`ResidueSize;
 end intrinsic;
 
-function SqrtResidueSizeFunc(X)
-  q := ResidueSize(X);
-  rad_q := Squarefree(q);
-  return Sqrt(CyclotomicField(rad_q * (rad_q mod 4 eq 1 select 1 else 4)) ! q);
-end function;
-
-intrinsic SqrtResidueSize(X :: GrpDrchFFElt) -> FldCycElt
-{ The square root of the size #k of the residue field k of a Dirichlet character
-  X over k(t) in its minimal cyclotomic field. }
-  if not assigned X`SqrtResidueSize then
-    X`SqrtResidueSize := SqrtResidueSizeFunc(X);
-  end if;
-  return X`SqrtResidueSize;
-end intrinsic;
-
 intrinsic Print(X :: GrpDrchFFElt)
 { The printing of a Dirichlet character X over k(t). }
   K<t> := Domain(X);
@@ -299,9 +286,20 @@ intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> FldCycElt
   return x eq 1 / t select (IsEven(X) select 1 else 0) else Evaluate(X, x);
 end intrinsic;
 
-function EvaluateSum(X, D)
-  return &+[X(f) : f in AllMonicPolynomials(ResidueField(X), D)];
+function SqrtResidueSizeFunc(X)
+  q := ResidueSize(X);
+  rad_q := Squarefree(q);
+  return Sqrt(CyclotomicField(rad_q * (rad_q mod 4 eq 1 select 1 else 4)) ! q);
 end function;
+
+intrinsic SqrtResidueSize(X :: GrpDrchFFElt) -> FldCycElt
+{ The square root of the size #k of the residue field k of a Dirichlet character
+  X over k(t) in its minimal cyclotomic field. }
+  if not assigned X`SqrtResidueSize then
+    X`SqrtResidueSize := SqrtResidueSizeFunc(X);
+  end if;
+  return X`SqrtResidueSize;
+end intrinsic;
 
 intrinsic ResidueImage(X :: GrpDrchFFElt) -> FldCycElt
 { The image of the generator of the residue field k of a Dirichlet character X
@@ -322,15 +320,6 @@ intrinsic ResidueCodomain(X :: GrpDrchFFElt) -> FldCyc
   return X`ResidueCodomain;
 end intrinsic;
 
-intrinsic ResidueOrder(X :: GrpDrchFFElt) -> RngIntElt
-{ The order of the character over k associated to a Dirichlet character X over
-  k(t) in its character group. }
-  if not assigned X`ResidueOrder then
-    X`ResidueOrder := CyclotomicOrder(ResidueCodomain(X));
-  end if;
-  return X`ResidueOrder;
-end intrinsic;
-
 intrinsic ResidueCharacter(X :: GrpDrchFFElt) -> GrpDrchFFElt
 { The character over k associated to a Dirichlet character X over k(t). This
   is a Dirichlet character over k(t) of modulus t - 1, whose image of generator
@@ -340,6 +329,15 @@ intrinsic ResidueCharacter(X :: GrpDrchFFElt) -> GrpDrchFFElt
         ResidueGenerator(X), ResidueImage(X));
   end if;
   return X`ResidueCharacter;
+end intrinsic;
+
+intrinsic ResidueOrder(X :: GrpDrchFFElt) -> RngIntElt
+{ The order of the character over k associated to a Dirichlet character X over
+  k(t) in its character group. }
+  if not assigned X`ResidueOrder then
+    X`ResidueOrder := Order(ResidueCharacter(X));
+  end if;
+  return X`ResidueOrder;
 end intrinsic;
 
 intrinsic IsEven(X :: GrpDrchFFElt) -> Bool
@@ -358,6 +356,17 @@ intrinsic IsOdd(X :: GrpDrchFFElt) -> Bool
     X`IsOdd := not IsEven(X);
   end if;
   return X`IsOdd;
+end intrinsic;
+
+intrinsic CharacterSum(X :: GrpDrchFFElt) -> FldCycElt
+{ The character sum of a Dirichlet character X over k(t) of a non-zero modulus M
+  in k[t]. This is the sum of X(x) of all monic polynomials x of k[t] of degree
+  deg(M) - 1, which is negated if X is even. }
+  if not assigned X`CharacterSum then
+    X`CharacterSum := (IsEven(X) select -1 else 1) * &+[X(f) :
+        f in AllMonicPolynomials(ResidueField(X), ResidueDegree(X) - 1)];
+  end if;
+  return X`CharacterSum;
 end intrinsic;
 
 function ResidueGaussSumFunc(X)
@@ -381,8 +390,8 @@ intrinsic GaussSum(X :: GrpDrchFFElt) -> FldCycElt
   k[t]. This is the sum of X(x) of all elements x of k[t] of degree at most the
   degree of M, weighted by the Hayes exponential function of x / M. }
   if not assigned X`GaussSum then
-    X`GaussSum := EvaluateSum(X, ResidueDegree(X) - 1)
-      * IsEven(X) select -ResidueSize(X) else ResidueGaussSum(X);
+    X`GaussSum := CharacterSum(X)
+      * IsEven(X) select ResidueSize(X) else ResidueGaussSum(X);
   end if;
   return X`GaussSum;
 end intrinsic;
@@ -390,8 +399,7 @@ end intrinsic;
 intrinsic RootNumber(X :: GrpDrchFFElt) -> FldCycElt
 { The global root number e(X) of a Dirichlet character X over k(t). }
   if not assigned X`RootNumber then
-    X`RootNumber := (IsEven(X) select -1 else 1)
-      * EvaluateSum(X, ResidueDegree(X) - 1) / SqrtResidueSize(X) ^ LDegree(X);
+    X`RootNumber := CharacterSum(X) / SqrtResidueSize(X) ^ LDegree(X);
   end if;
   return X`RootNumber;
 end intrinsic;
@@ -492,8 +500,8 @@ function LFunctionFunc(X, FunctionalEquation)
   D := LDegree(X);
   return FunctionalEquation select
     LFunction(EulerFactors(X, Floor(D / 2)), D : FunctionalEquation := true,
-      EpsilonFactor := RootNumber(X) * SqrtResidueSize(X) ^ D,
-      WeightFactor := 1 / ResidueSize(X), DualAutomorphism := ComplexConjugate)
+      EpsilonFactor := CharacterSum(X), WeightFactor := 1 / ResidueSize(X),
+      DualAutomorphism := ComplexConjugate)
     else LFunction(EulerFactors(X, D), D);
 end function;
 
