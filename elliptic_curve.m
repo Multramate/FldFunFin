@@ -35,6 +35,18 @@ k, which has a unique place at infinity 1 / t. This includes generalised traces
 of Frobenius, local Euler factors, and local and global root numbers.
 */
 
+function ConductorProductWithLI(E, LIs)
+  K<t> := BaseRing(E);
+  return &*[Minimum(LI[1]) ^ LI[3] : LI in LIs | Minimum(LI[1]) ne 1 / t];
+end function;
+
+intrinsic ConductorProduct(E :: CrvEll[FldFunRat[FldFin]]) -> RngUPolElt
+{ The conductor of an elliptic curve E over k(t) as an element of k[t]. This
+  returns the finite product of all of the prime elements of k[t] raised to the
+  power of their conductor exponents. }
+  return ConductorProductWithLI(E, LocalInformation(E));
+end intrinsic;
+
 function TraceOfFrobeniusWithLI(E, LIs, v)
   K<t> := BaseRing(E);
   k<a> := BaseRing(K);
@@ -59,8 +71,8 @@ intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat[FldFin]],
     v :: FldFunRatUElt[FldFin]) -> RngIntElt
 { The trace of Frobenius a_v(E) for the reduction of an elliptic curve E over
   k(t) at a place v of k(t), which must either be a prime element of k[t] or
-  1 / t. Note that this returns 1 if it is split multiplicative, -1 if it is
-  non-split multiplicative, and 0 if it is additive. }
+  1 / t. This returns 1 if it is split multiplicative, -1 if it is non-split
+  multiplicative, and 0 if it is additive. }
   K<t> := BaseRing(E);
   require Denominator(v) eq 1 or v eq 1 / t:
     "The place v is neither an element of k[t] nor 1 / t.";
@@ -70,17 +82,16 @@ end intrinsic;
 intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat[FldFin]], v :: PlcFunElt)
   -> RngIntElt
 { The trace of Frobenius a_v(E) for the reduction of an elliptic curve E over
-  k(t) at a place v of k(t). Note that this returns 1 if it is split
-  multiplicative, -1 if it is non-split multiplicative, and 0 if it is
-  additive. }
+  k(t) at a place v of k(t). This returns 1 if it is split multiplicative, -1 if
+  it is non-split multiplicative, and 0 if it is additive. }
   K<t> := BaseRing(E);
   return TraceOfFrobenius(E, K ! Minimum(v));
 end intrinsic;
 
 intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat[FldFin]]) -> RngIntElt
 { The trace of Frobenius a_v(E) for the reduction of an elliptic curve E over
-  k(t) at v = 1 / t. Note that this returns 1 if it is split multiplicative, -1
-  if it is non-split multiplicative, and 0 if it is additive. }
+  k(t) at v = 1 / t. This returns 1 if it is split multiplicative, -1 if it is
+  non-split multiplicative, and 0 if it is additive. }
   K<t> := BaseRing(E);
   return TraceOfFrobenius(E, 1 / t);
 end intrinsic;

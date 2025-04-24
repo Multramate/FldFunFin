@@ -17,10 +17,27 @@ polynomial of degree d(E x X) equal to 2d(X) + d(E) - 4.
 This file defines some intrinsics that compute the formal L-function of an
 elliptic curve twisted by a Dirichlet character of irreducible moduli over the
 global function field k(t) of the projective line over k, which has a unique
-place at infinity 1 / t. This includes local Euler factors.
+place at infinity 1 / t. This includes root numbers and local Euler factors.
 */
 
-import "elliptic_curve.m": TraceOfFrobeniusWithLI, LDegreeWithLI;
+import "elliptic_curve.m": ConductorProductWithLI, TraceOfFrobeniusWithLI,
+  RootNumberWithLI, LDegreeWithLI;
+
+function RootNumberWithLI_(E, X, LIs)
+  return RootNumberWithLI(E, LIs) * RootNumber(X) ^ 2
+    * X(ConductorProductWithLI(E, LIs));
+end function;
+
+intrinsic RootNumber(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt)
+  -> FldCycElt
+{ The global root number e(E x X) of an elliptic curve E over k(t) twisted by a
+  Dirichlet character X, assuming that the conductors of E and X have disjoint
+  support. Note that this has not been implemented for characteristic 2 and 3. }
+  K<t> := BaseRing(E);
+  require Characteristic(K) gt 3:
+    "This has not been implemented for characteristic 2 and 3.";
+  return RootNumberWithLI_(E, X, LocalInformation(E));
+end intrinsic;
 
 function EulerFactorWithLI_(E, X, LIs, v, D, P);
   R<T> := PolynomialRing(Codomain(X));
@@ -137,8 +154,8 @@ intrinsic LFunction(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt :
 { The formal L-function L(E, X, T) of an elliptic curve E over k(t) twisted by a
   Dirichlet character X, assuming that the conductors of E and X have disjoint
   support and are not both trivial. If the FunctionalEquation
-  L(E, X, T) = e(E, X) q^(d(E, X)) T^(d(E, X)) L(E, X, 1 / q^2 T) is true, then
-  the necessary computation is decreased significantly. By default,
+  L(E, X, T) = e(E x X) q^(d(E x X)) T^(d(E x X)) L(E, X, 1 / q^2 T)-bar is
+  true, then the necessary computation is decreased significantly. By default,
   FunctionalEquation is set to be false, since this has not been implemented. }
   LIs := LocalInformation(E);
   require LIs ne [] or Conductor(X) ne []:

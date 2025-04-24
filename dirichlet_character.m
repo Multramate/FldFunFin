@@ -396,14 +396,6 @@ intrinsic GaussSum(X :: GrpDrchFFElt) -> FldCycElt
   return X`GaussSum;
 end intrinsic;
 
-intrinsic RootNumber(X :: GrpDrchFFElt) -> FldCycElt
-{ The global root number e(X) of a Dirichlet character X over k(t). }
-  if not assigned X`RootNumber then
-    X`RootNumber := CharacterSum(X) / SqrtResidueSize(X) ^ LDegree(X);
-  end if;
-  return X`RootNumber;
-end intrinsic;
-
 function ConductorFunc(X)
   S := [];
   if IsOdd(X) then
@@ -490,6 +482,14 @@ intrinsic LDegree(X :: GrpDrchFFElt) -> RngIntElt
         M_e in Conductor(X)] - 2;
   end if;
   return X`LDegree;
+end intrinsic;
+
+intrinsic RootNumber(X :: GrpDrchFFElt) -> FldCycElt
+{ The global root number e(X) of a Dirichlet character X over k(t). }
+  if not assigned X`RootNumber then
+    X`RootNumber := CharacterSum(X) / SqrtResidueSize(X) ^ LDegree(X);
+  end if;
+  return X`RootNumber;
 end intrinsic;
 
 function LFunctionFunc(X, FunctionalEquation)
