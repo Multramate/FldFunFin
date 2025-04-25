@@ -40,7 +40,7 @@ function ConductorProductWithLI(E, LIs)
   return &*[Minimum(LI[1]) ^ LI[3] : LI in LIs | Minimum(LI[1]) ne 1 / t];
 end function;
 
-intrinsic ConductorProduct(E :: CrvEll[FldFunRat[FldFin]]) -> RngUPolElt
+intrinsic ConductorProduct(E :: CrvEll[FldFunRat[FldFin]]) -> RngUPolElt[FldFin]
 { The conductor of an elliptic curve E over k(t) as an element of k[t]. This
   returns the finite product of all of the prime elements of k[t] raised to the
   power of their conductor exponents. }
@@ -116,7 +116,7 @@ function EulerFactorWithLI(E, LIs, v, D, P)
 end function;
 
 intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]], v :: Any : Exponent := 1,
-    Precision := Infinity()) -> RngUPolElt
+    Precision := Infinity()) -> RngUPolElt[RngInt]
 { The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at a place v of
   k(t), which must either be a prime element of k[t] or 1 / t, where D is some
   Exponent. If Precision is set to be finite, then this is truncated to a
@@ -132,7 +132,7 @@ intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]], v :: Any : Exponent := 1,
 end intrinsic;
 
 intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]] : Exponent := 1,
-    Precision := Infinity()) -> RngUPolElt
+    Precision := Infinity()) -> RngUPolElt[RngInt]
 { The Euler factor L_v(E, T^D) of an elliptic curve E over k(t) at v = 1 / t,
   where D is some Exponent. If Precision is set to be finite, then this is
   truncated to a polynomial of degree at most Precision. By default, Exponent is
@@ -157,7 +157,7 @@ function EulerFactorsWithLI(E, LIs, D)
 end function;
 
 intrinsic EulerFactors(E :: CrvEll[FldFunRat[FldFin]], D :: RngIntElt)
-  -> SeqEnum[RngUPolElt]
+  -> SeqEnum[RngUPolElt[RngInt]]
 { The finite set of all Euler factors of an elliptic curve E over k(t) at all
   places of k(t) of degree at most D. }
   requirege D, 0;
@@ -216,15 +216,26 @@ function LDegreeWithLI(E, LIs)
   return &+[IntegerRing() | Degree(LI[1]) * LI[3] : LI in LIs] - 4;
 end function;
 
-intrinsic LDegree(E :: CrvEll[FldFunRat[FldFin]]) -> RngUPolElt
+intrinsic LDegree(E :: CrvEll[FldFunRat[FldFin]]) -> RngIntElt
 { The value deg P(E, T) - deg Q(E, T) for an elliptic curve E over k(t) with
   formal L-function L(E, T) such that L(E, T) Q(E, T) = P(E, T) for some
   univariate polynomials P(E, T) and Q(E, T) over k. }
   return LDegreeWithLI(E, LocalInformation(E));
 end intrinsic;
 
+function EpsilonFactorWithLI(E, LIs)
+  K<t> := BaseRing(E);
+  return RootNumberWithLI(E, LIs) * #BaseRing(K) ^ LDegreeWithLI(E, LIs);
+end function;
+
+intrinsic EpsilonFactor(E :: CrvEll[FldFunRat[FldFin]]) -> RngIntElt
+{ The epsilon factor e(E) q^(d(E)) of an elliptic curve E over k(t). Note that
+  this has not been implemented for characteristic 2 and 3. }
+  return EpsilonFactorWithLI(E, LocalInformation(E));
+end intrinsic;
+
 intrinsic LFunction_(E :: CrvEll[FldFunRat[FldFin]] :
-    FunctionalEquation := true) -> RngUPolElt
+    FunctionalEquation := true) -> RngUPolElt[RngInt]
 { The formal L-function L(E, T) of an elliptic curve E over k(t). If E is a
   constant elliptic curve arising as the base change of some base elliptic
   curve E' over k, then this returns 1 / Q(T) Q(q T), where Q(T) is the
@@ -238,7 +249,6 @@ intrinsic LFunction_(E :: CrvEll[FldFunRat[FldFin]] :
     return 1 / (L * Evaluate(L, #BaseRing(E_) * T));
   end if;
   K<t> := BaseRing(E);
-  k<a> := BaseRing(K);
   LIs := LocalInformation(E);
   D := LDegreeWithLI(E, LIs);
   if FunctionalEquation then
@@ -246,8 +256,8 @@ intrinsic LFunction_(E :: CrvEll[FldFunRat[FldFin]] :
       "This has not been implemented for characteristic 2 and 3.";
     return LFunction(EulerFactorsWithLI(E, LIs, Floor(D / 2)), D :
         FunctionalEquation := true,
-        EpsilonFactor := RootNumberWithLI(E, LIs) * #k ^ D,
-        WeightFactor := 1 / #k ^ 2, DualAutomorphism := func<x | x>);
+        EpsilonFactor := EpsilonFactorWithLI(E, LIs),
+        WeightFactor := 1 / #BaseRing(K) ^ 2, DualAutomorphism := func<x | x>);
   else
     return LFunction(EulerFactorsWithLI(E, LIs, D), D);
   end if;

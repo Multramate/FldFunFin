@@ -21,7 +21,7 @@ place at infinity 1 / t. This includes root numbers and local Euler factors.
 */
 
 import "elliptic_curve.m": ConductorProductWithLI, TraceOfFrobeniusWithLI,
-  RootNumberWithLI, LDegreeWithLI;
+  RootNumberWithLI, LDegreeWithLI, EpsilonFactorWithLI;
 
 function RootNumberWithLI_(E, X, LIs)
   return RootNumberWithLI(E, LIs) * RootNumber(X) ^ 2
@@ -33,10 +33,25 @@ intrinsic RootNumber(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt)
 { The global root number e(E x X) of an elliptic curve E over k(t) twisted by a
   Dirichlet character X, assuming that the conductors of E and X have disjoint
   support. Note that this has not been implemented for characteristic 2 and 3. }
-  K<t> := BaseRing(E);
-  require Characteristic(K) gt 3:
+  require Characteristic(X) gt 3:
     "This has not been implemented for characteristic 2 and 3.";
   return RootNumberWithLI_(E, X, LocalInformation(E));
+end intrinsic;
+
+function EpsilonFactorWithLI_(E, X, LIs)
+  return EpsilonFactorWithLI(E, LIs) * CharacterSum(X) ^ 2
+    * X(ConductorProductWithLI(E, LIs)) * ResidueSize(X) ^ (LDegree(X) + 4);
+end function;
+
+intrinsic EpsilonFactor(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt)
+  -> FldCycElt
+{ The epsilon factor e(E x X) q^(d(E x X)) of an elliptic curve E over k(t)
+  twisted by a Dirichlet character X, assuming that the conductors of E and X
+  have disjoint support. Note that this has not been implemented for
+  characteristic 2 and 3. }
+  require Characteristic(X) gt 3:
+    "This has not been implemented for characteristic 2 and 3.";
+  return EpsilonFactorWithLI_(E, X, LocalInformation(E));
 end intrinsic;
 
 function EulerFactorWithLI_(E, X, LIs, v, D, P);
@@ -61,7 +76,7 @@ function EulerFactorWithLI_(E, X, LIs, v, D, P);
 end function;
 
 intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt,
-    v :: Any : Exponent := 1, Precision := Infinity()) -> RngUPolElt
+    v :: Any : Exponent := 1, Precision := Infinity()) -> RngUPolElt[FldCyc]
 { The Euler factor L_v(E, X, T^D) of an elliptic curve E over k(t) twisted by a
   Dirichlet character X at a place v of k(t), which must either be a prime
   element of k[t] or 1 / t, assuming that v is not a bad place for both of E and
@@ -87,7 +102,7 @@ intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt,
 end intrinsic;
 
 intrinsic EulerFactor(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt :
-    Exponent := 1, Precision := Infinity()) -> RngUPolElt
+    Exponent := 1, Precision := Infinity()) -> RngUPolElt[FldCyc]
 { The Euler factor L_v(E, X, T^D) of an elliptic curve E over k(t) twisted by a
   Dirichlet character X at v = 1 / t, assuming that v is not a bad place for
   both of E and X, where D is some Exponent. If Precision is set to be finite,
@@ -113,7 +128,7 @@ function EulerFactorsWithLI_(E, X, LIs, D)
 end function;
 
 intrinsic EulerFactors(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt,
-    D :: RngIntElt) -> SeqEnum[RngUPolElt]
+    D :: RngIntElt) -> SeqEnum[RngUPolElt[FldCyc]]
 { The finite set of all Euler factors of an elliptic curve E over k(t) twisted
   by a Dirichlet character X, assuming that the conductors of E and X have
   disjoint support, at all places of k(t) of degree at most D. }
@@ -133,7 +148,7 @@ function LDegreeWithLI_(E, X, LIs)
 end function;
 
 intrinsic LDegree(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt)
-  -> RngUPolElt
+  -> RngIntElt
 { The value deg P(E, X, T) - deg Q(E, X, T) for an elliptic curve E over k(t)
   twisted by a Dirichlet character X, assuming that the conductors of E and X
   have disjoint support, with formal L-function L(E, X, T) such that
@@ -150,7 +165,7 @@ intrinsic LDegree(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt)
 end intrinsic;
 
 intrinsic LFunction(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt :
-    FunctionalEquation := false) -> RngUPolElt
+    FunctionalEquation := false) -> RngUPolElt[FldCyc]
 { The formal L-function L(E, X, T) of an elliptic curve E over k(t) twisted by a
   Dirichlet character X, assuming that the conductors of E and X have disjoint
   support and are not both trivial. If the FunctionalEquation
@@ -166,10 +181,16 @@ intrinsic LFunction(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt :
         "The conductors of E and X do not have disjoint support.";
     end for;
   end for;
+  D := LDegreeWithLI_(E, X, LIs);
   if FunctionalEquation then
-    require false: "The functional equation has not been implemented.";
+    require Characteristic(X) gt 3:
+      "This has not been implemented for characteristic 2 and 3.";
+    return LFunction(EulerFactorsWithLI_(E, X, LIs, Floor(D / 2)), D :
+        FunctionalEquation := true,
+        EpsilonFactor := EpsilonFactorWithLI_(E, X, LIs),
+        WeightFactor := 1 / ResidueSize(X) ^ 2,
+        DualAutomorphism := ComplexConjugate);
   else
-    D := LDegree(E, X);
     return LFunction(EulerFactorsWithLI_(E, X, LIs, D), D);
   end if;
 end intrinsic;

@@ -24,7 +24,7 @@ includes the type of Dirichlet characters and local Euler factors.
 */
 
 intrinsic AllMonicPolynomials(k :: FldFin, D :: RngIntElt)
-  -> SetEnum[RngUPolElt]
+  -> SetEnum[RngUPolElt[FldFin]]
 { The set of all monic polynomials over a finite field k of degree D. }
   R<t> := PolynomialRing(k);
   return {t ^ D + R ! s : s in Subsequences(Set(k), D)};
@@ -98,8 +98,8 @@ declare attributes GrpDrchFFElt: Modulus, Generator, Image,
   BaseRing, Characteristic, Codomain, Domain, EulerPhi, Order,
   ResidueDegree, ResidueField, ResidueGenerator, ResidueSize, SqrtResidueSize,
   ResidueImage, ResidueCodomain, ResidueCharacter, ResidueOrder,
-  IsEven, IsOdd, CharacterSum, ResidueGaussSum, GaussSum, RootNumber,
-  Conductor, LDegree;
+  IsEven, IsOdd, CharacterSum, EpsilonFactor, ResidueGaussSum, GaussSum,
+  Conductor, LDegree, RootNumber;
 
 intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any, h :: FldCycElt :
     Minimal := false) -> GrpDrchFFElt
@@ -358,15 +358,25 @@ intrinsic IsOdd(X :: GrpDrchFFElt) -> Bool
   return X`IsOdd;
 end intrinsic;
 
-intrinsic CharacterSum(X :: GrpDrchFFElt) -> FldCycElt
+intrinsic CharacterSum(X :: GrpDrchFFElt : D := ResidueDegree(X) - 1)
+  -> FldCycElt
 { The character sum of a Dirichlet character X over k(t) of a non-zero modulus M
   in k[t]. This is the sum of X(x) of all monic polynomials x of k[t] of degree
-  deg(M) - 1, which is negated if X is even. }
+  D. By default, D is set to be deg(M) - 1. }
   if not assigned X`CharacterSum then
-    X`CharacterSum := (IsEven(X) select -1 else 1) * &+[X(f) :
+    X`CharacterSum := &+[X(f) :
         f in AllMonicPolynomials(ResidueField(X), ResidueDegree(X) - 1)];
   end if;
   return X`CharacterSum;
+end intrinsic;
+
+intrinsic EpsilonFactor(X :: GrpDrchFFElt) -> FldCycElt
+{ The epsilon factor e(X) q^(d(X) / 2) of a Dirichlet character X over k(t).
+  This is the character sum of X if X is odd and its negation otherwise. }
+  if not assigned X`EpsilonFactor then
+    X`EpsilonFactor := IsEven(X) select -CharacterSum(X) else CharacterSum(X);
+  end if;
+  return X`EpsilonFactor;
 end intrinsic;
 
 function ResidueGaussSumFunc(X)
@@ -390,7 +400,7 @@ intrinsic GaussSum(X :: GrpDrchFFElt) -> FldCycElt
   k[t]. This is the sum of X(x) of all elements x of k[t] of degree at most the
   degree of M, weighted by the Hayes exponential function of x / M. }
   if not assigned X`GaussSum then
-    X`GaussSum := CharacterSum(X)
+    X`GaussSum := EpsilonFactor(X)
       * IsEven(X) select ResidueSize(X) else ResidueGaussSum(X);
   end if;
   return X`GaussSum;
@@ -426,7 +436,7 @@ function EulerFactorFunc(X, v, D, P)
 end function;
 
 intrinsic EulerFactor(X :: GrpDrchFFElt, v :: Any : Exponent := 1,
-    Precision := Infinity()) -> RngUPolElt
+    Precision := Infinity()) -> RngUPolElt[FldCyc]
 { The Euler factor L_v(X, T^D) of a Dirichlet character X over k(t) at a place v
   of k(t), which must either be a prime element of k[t] or 1 / t, where D is
   some Exponent. If Precision is set to be finite, then this is truncated to a
@@ -442,7 +452,7 @@ intrinsic EulerFactor(X :: GrpDrchFFElt, v :: Any : Exponent := 1,
 end intrinsic;
 
 intrinsic EulerFactor(X :: GrpDrchFFElt : Exponent := 1,
-    Precision := Infinity()) -> RngIntElt
+    Precision := Infinity()) -> RngUPolElt[FldCyc]
 { The Euler factor L_v(X, T^D) of a Dirichlet character X over k(t) at
   v = 1 / t, where D is some Exponent. If Precision is set to be finite, then
   this is truncated to a polynomial of degree at most Precision. By default,
@@ -465,7 +475,8 @@ function EulerFactorsFunc(X, D)
   return S;
 end function;
 
-intrinsic EulerFactors(X :: GrpDrchFFElt, D :: RngIntElt) -> SeqEnum[RngUPolElt]
+intrinsic EulerFactors(X :: GrpDrchFFElt, D :: RngIntElt)
+  -> SeqEnum[RngUPolElt[FldCyc]]
 { The finite set of all Euler factors of a Dirichlet character X over k(t) at
   all places of k(t) of degree at most D. }
   requirege D, 0;
@@ -487,12 +498,18 @@ end intrinsic;
 intrinsic RootNumber(X :: GrpDrchFFElt) -> FldCycElt
 { The global root number e(X) of a Dirichlet character X over k(t). }
   if not assigned X`RootNumber then
-    X`RootNumber := CharacterSum(X) / SqrtResidueSize(X) ^ LDegree(X);
+    X`RootNumber := EpsilonFactor(X) / SqrtResidueSize(X) ^ LDegree(X);
   end if;
   return X`RootNumber;
 end intrinsic;
 
-function LFunctionFunc(X, FunctionalEquation)
+intrinsic LFunction(X :: GrpDrchFFElt : FunctionalEquation := false)
+  -> RngUPolElt[FldCyc]
+{ The formal L-function L(X, T) of a Dirichlet character X over k(t). If X has
+  trivial conductor, then this returns 1 / (1 - T) (1 - q T). Otherwise, if the
+  FunctionalEquation L(X, T) = e(X) q^(d(X) / 2) T^(d(X)) L(X, 1 / q T)-bar is
+  true, then the necessary computation may be decreased. By default,
+  FunctionalEquation is set to be false. }
   if Conductor(X) eq [] then
     R<T> := PolynomialRing(Codomain(X));
     return 1 / ((1 - T) * (1 - ResidueSize(X) * T));
@@ -500,17 +517,7 @@ function LFunctionFunc(X, FunctionalEquation)
   D := LDegree(X);
   return FunctionalEquation select
     LFunction(EulerFactors(X, Floor(D / 2)), D : FunctionalEquation := true,
-      EpsilonFactor := CharacterSum(X), WeightFactor := 1 / ResidueSize(X),
+      EpsilonFactor := EpsilonFactor(X), WeightFactor := 1 / ResidueSize(X),
       DualAutomorphism := ComplexConjugate)
     else LFunction(EulerFactors(X, D), D);
-end function;
-
-intrinsic LFunction(X :: GrpDrchFFElt : FunctionalEquation := false)
-  -> RngUPolElt
-{ The formal L-function L(X, T) of a Dirichlet character X over k(t). If X has
-  trivial conductor, then this returns 1 / (1 - T) (1 - q T). Otherwise, if the
-  FunctionalEquation L(X, T) = e(X) q^(d(X) / 2) T^(d(X)) L(X, 1 / q T)-bar is
-  true, then the necessary computation may be decreased. By default,
-  FunctionalEquation is set to be false. }
-  return LFunctionFunc(X, FunctionalEquation);
 end intrinsic;
