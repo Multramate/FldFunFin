@@ -30,10 +30,10 @@ intrinsic AllMonicPolynomials(k :: FldFin, D :: RngIntElt)
   return {t ^ D + R ! s : s in Subsequences(Set(k), D)};
 end intrinsic;
 
-function EulerPhiWithF(FM)
-  q := #BaseRing(Universe(FM)[1]);
+function EulerPhiWithF(fac)
+  q := #BaseRing(Universe(fac)[1]);
   phi := 1;
-  for m in FM do
+  for m in fac do
     q_f := q ^ Degree(m[1]);
     phi *:= q_f ^ (m[2] - 1) * (q_f - 1);
   end for;
@@ -51,6 +51,62 @@ intrinsic EulerPhi(M :: FldFunRatUElt[FldFin]) -> RngIntElt
 { " }
   require Denominator(M) eq 1: "The modulus M is not an element of k[t].";
   return EulerPhi(Numerator(M));
+end intrinsic;
+
+function IsGeneratorWithPhi(M, x, phi, fac)
+  return Modexp(x, phi, M) eq 1 and &and[Modexp(x, m, M) ne 1 : m in fac];
+end function;
+
+intrinsic IsGenerator(M :: RngUPolElt[FldFin], x :: Any) -> Bool
+{ The predicate that checks whether an element x in k[t] / M for a non-zero
+  modulus M in k[t] is a generator of its unit group. }
+  R<t> := Parent(M);
+  require IsCoercible(R, x): "The element x is not an element of k[t].";
+  phi := EulerPhi(M);
+  return IsGeneratorWithPhi(M, R ! x mod M, phi,
+      [phi div m[1] : m in Factorization(phi)]);
+end intrinsic;
+
+intrinsic IsGenerator(M :: FldFunRatUElt[FldFin], x :: Any) -> Bool
+{ " }
+  require Denominator(M) eq 1: "The modulus M is not an element of k[t].";
+  return IsGenerator(Numerator(M), x);
+end intrinsic;
+
+function GeneratorsWithPhi(M, phi, fac)
+  R<t> := Parent(M);
+  k := Set(BaseRing(R));
+  return {R ! x : x in Subsequences(k, Degree(M)) |
+      IsGeneratorWithPhi(M, R ! x mod M, phi, fac)};
+end function;
+
+intrinsic Generators(M :: RngUPolElt[FldFin]) -> SetEnum[RngUPolElt[FldFin]]
+{ The finite set of generators of the unit group of k[t] / M for a non-zero
+  modulus M in k[t]. }
+  phi := EulerPhi(M);
+  return GeneratorsWithPhi(M, phi, [phi div m[1] : m in Factorization(phi)]);
+end intrinsic;
+
+intrinsic Generators(M :: FldFunRatUElt[FldFin]) -> SetEnum[RngUPolElt[FldFin]]
+{ " }
+  require Denominator(M) eq 1: "The modulus M is not an element of k[t].";
+  return Generators(Numerator(M));
+end intrinsic;
+
+function GeneratorWithPhi(M, phi, fac)
+  return Minimum(GeneratorsWithPhi(M, phi, fac));
+end function;
+
+intrinsic Generator(M :: RngUPolElt[FldFin]) -> RngUPolElt[FldFin]
+{ A generator of the unit group of k[t] / M for a non-zero modulus M in k[t]. }
+  phi := EulerPhi(M);
+  return GeneratorWithPhi(M, phi, [phi div m[1] : m in Factorization(phi)]);
+end intrinsic;
+
+intrinsic Generator(M :: FldFunRatUElt[FldFin]) -> RngUPolElt[FldFin]
+{ " }
+  require Denominator(M) eq 1: "The modulus M is not an element of k[t].";
+  return Generator(Numerator(M));
 end intrinsic;
 
 function LogWithMod(M, b, x)
@@ -341,8 +397,8 @@ intrinsic ResidueOrder(X :: GrpDrchFFElt) -> RngIntElt
 end intrinsic;
 
 intrinsic IsEven(X :: GrpDrchFFElt) -> Bool
-{ The parity of a Dirichlet character X over k(t). This returns true if X is
-  even, namely that X is trivial on all elements of k. }
+{ The parity of a Dirichlet character X over k(t). This is true if X is even,
+  namely that X is trivial on all elements of k. }
   if not assigned X`IsEven then
     X`IsEven := ResidueImage(X) eq 1;
   end if;
@@ -350,8 +406,8 @@ intrinsic IsEven(X :: GrpDrchFFElt) -> Bool
 end intrinsic;
 
 intrinsic IsOdd(X :: GrpDrchFFElt) -> Bool
-{ The parity of a Dirichlet character X over k(t). This returns true if X is
-  odd, namely that X is not trivial on some element of k. }
+{ The parity of a Dirichlet character X over k(t). This is true if X is odd,
+  namely that X is not trivial on some element of k. }
   if not assigned X`IsOdd then
     X`IsOdd := not IsEven(X);
   end if;
@@ -418,7 +474,7 @@ function ConductorFunc(X)
 end function;
 
 intrinsic Conductor(X :: GrpDrchFFElt) -> SeqEnum[Tup]
-{ The conductor of a Dirichlet character X over k(t). This returns a sequence of
+{ The conductor of a Dirichlet character X over k(t). This is a sequence of
   tuples of the form <M, e>, where M is either a prime element of k[t] or 1 / t,
   and the local conductor exponent e at M is a positive integer. }
   if not assigned X`Conductor then
@@ -506,7 +562,7 @@ end intrinsic;
 intrinsic LFunction(X :: GrpDrchFFElt : FunctionalEquation := false)
   -> RngUPolElt[FldCyc]
 { The formal L-function L(X, T) of a Dirichlet character X over k(t). If X has
-  trivial conductor, then this returns 1 / (1 - T) (1 - q T). Otherwise, if the
+  trivial conductor, then this is 1 / (1 - T) (1 - q T). Otherwise, if the
   FunctionalEquation L(X, T) = e(X) q^(d(X) / 2) T^(d(X)) L(X, 1 / q T)-bar is
   true, then the necessary computation may be decreased. By default,
   FunctionalEquation is set to be false. }

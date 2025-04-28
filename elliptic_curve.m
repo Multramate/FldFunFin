@@ -41,9 +41,9 @@ function ConductorProductWithLI(E, LIs)
 end function;
 
 intrinsic ConductorProduct(E :: CrvEll[FldFunRat[FldFin]]) -> RngUPolElt[FldFin]
-{ The conductor of an elliptic curve E over k(t) as an element of k[t]. This
-  returns the finite product of all of the prime elements of k[t] raised to the
-  power of their conductor exponents. }
+{ The conductor of an elliptic curve E over k(t) as an element of k[t]. This is
+  the finite product of all of the prime elements of k[t] raised to the power of
+  their local conductor exponents. }
   return ConductorProductWithLI(E, LocalInformation(E));
 end intrinsic;
 
@@ -71,7 +71,7 @@ intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat[FldFin]],
     v :: FldFunRatUElt[FldFin]) -> RngIntElt
 { The trace of Frobenius a_v(E) for the reduction of an elliptic curve E over
   k(t) at a place v of k(t), which must either be a prime element of k[t] or
-  1 / t. This returns 1 if it is split multiplicative, -1 if it is non-split
+  1 / t. This is 1 if it is split multiplicative, -1 if it is non-split
   multiplicative, and 0 if it is additive. }
   K<t> := BaseRing(E);
   require Denominator(v) eq 1 or v eq 1 / t:
@@ -82,15 +82,15 @@ end intrinsic;
 intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat[FldFin]], v :: PlcFunElt)
   -> RngIntElt
 { The trace of Frobenius a_v(E) for the reduction of an elliptic curve E over
-  k(t) at a place v of k(t). This returns 1 if it is split multiplicative, -1 if
-  it is non-split multiplicative, and 0 if it is additive. }
+  k(t) at a place v of k(t). This is 1 if it is split multiplicative, -1 if it
+  is non-split multiplicative, and 0 if it is additive. }
   K<t> := BaseRing(E);
   return TraceOfFrobenius(E, K ! Minimum(v));
 end intrinsic;
 
 intrinsic TraceOfFrobenius(E :: CrvEll[FldFunRat[FldFin]]) -> RngIntElt
 { The trace of Frobenius a_v(E) for the reduction of an elliptic curve E over
-  k(t) at v = 1 / t. This returns 1 if it is split multiplicative, -1 if it is
+  k(t) at v = 1 / t. This is 1 if it is split multiplicative, -1 if it is
   non-split multiplicative, and 0 if it is additive. }
   K<t> := BaseRing(E);
   return TraceOfFrobenius(E, 1 / t);
@@ -238,8 +238,8 @@ intrinsic LFunction_(E :: CrvEll[FldFunRat[FldFin]] :
     FunctionalEquation := true) -> RngUPolElt[RngInt]
 { The formal L-function L(E, T) of an elliptic curve E over k(t). If E is a
   constant elliptic curve arising as the base change of some base elliptic
-  curve E' over k, then this returns 1 / Q(T) Q(q T), where Q(T) is the
-  numerator of the zeta-function of E'. Otherwise, if the FunctionalEquation
+  curve E' over k, then this is 1 / Q(T) Q(q T), where Q(T) is the numerator of
+  the zeta-function of E'. Otherwise, if the FunctionalEquation
   L(E, T) = e(E) q^(d(E)) T^(d(E)) L(E, 1 / q^2 T) is true, then the necessary
   computation is decreased significantly. By default, FunctionalEquation is set
   to be true, but this has not been implemented for characteristic 2 and 3. }
