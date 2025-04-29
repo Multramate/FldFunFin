@@ -153,7 +153,7 @@ declare type GrpDrchFFElt;
 declare attributes GrpDrchFFElt: Modulus, Generator, Image,
   BaseRing, Characteristic, Codomain, Domain, EulerPhi, Order,
   ResidueDegree, ResidueField, ResidueGenerator, ResidueSize, SqrtResidueSize,
-  ResidueImage, ResidueCodomain, ResidueCharacter, ResidueOrder,
+  Inverse, ResidueImage, ResidueCodomain, ResidueCharacter, ResidueOrder,
   IsEven, IsOdd, CharacterSum, EpsilonFactor, ResidueGaussSum, GaussSum,
   Conductor, LDegree, RootNumber;
 
@@ -318,6 +318,21 @@ intrinsic ResidueSize(X :: GrpDrchFFElt) -> RngIntElt
   return X`ResidueSize;
 end intrinsic;
 
+function SqrtResidueSizeFunc(X)
+  q := ResidueSize(X);
+  rad_q := Squarefree(q);
+  return Sqrt(CyclotomicField(rad_q * (rad_q mod 4 eq 1 select 1 else 4)) ! q);
+end function;
+
+intrinsic SqrtResidueSize(X :: GrpDrchFFElt) -> FldCycElt
+{ The square root of the size #k of the residue field k of a Dirichlet character
+  X over k(t) in its minimal cyclotomic field. }
+  if not assigned X`SqrtResidueSize then
+    X`SqrtResidueSize := SqrtResidueSizeFunc(X);
+  end if;
+  return X`SqrtResidueSize;
+end intrinsic;
+
 intrinsic Print(X :: GrpDrchFFElt)
 { The printing of a Dirichlet character X over k(t). }
   K<t> := Domain(X);
@@ -342,19 +357,55 @@ intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> FldCycElt
   return x eq 1 / t select (IsEven(X) select 1 else 0) else Evaluate(X, x);
 end intrinsic;
 
-function SqrtResidueSizeFunc(X)
-  q := ResidueSize(X);
-  rad_q := Squarefree(q);
-  return Sqrt(CyclotomicField(rad_q * (rad_q mod 4 eq 1 select 1 else 4)) ! q);
-end function;
-
-intrinsic SqrtResidueSize(X :: GrpDrchFFElt) -> FldCycElt
-{ The square root of the size #k of the residue field k of a Dirichlet character
-  X over k(t) in its minimal cyclotomic field. }
-  if not assigned X`SqrtResidueSize then
-    X`SqrtResidueSize := SqrtResidueSizeFunc(X);
+intrinsic Inverse(X :: GrpDrchFFElt) -> GrpDrchFFElt
+{ The inverse of a Dirichlet character X over k(t). Note that this is also equal
+  to the complex conjugate of X. }
+  if not assigned X`Inverse then
+    X`Inverse := DirichletCharacter(Modulus(X), Generator(X), 1 / Image(X));
   end if;
-  return X`SqrtResidueSize;
+  return X`Inverse;
+end intrinsic;
+
+intrinsic Canonise(X :: GrpDrchFFElt) -> GrpDrchFFElt
+{ The same Dirichlet character X over k(t), but whose generator is normalised to
+  the minimal generator Generator(X). }
+  M := Modulus(X);
+  g := Generator(M);
+  return DirichletCharacter(M, g, X(g));
+end intrinsic;
+
+intrinsic Canonise(~X :: GrpDrchFFElt)
+{ " }
+  X := Canonise(X);
+end intrinsic;
+
+intrinsic 'eq'(X :: GrpDrchFFElt, Y :: GrpDrchFFElt) -> Bool
+{ The equality of two Dirichlet characters X and Y over k(t). }
+  X := Canonise(X);
+  Y := Canonise(Y);
+  return Modulus(X) eq Modulus(Y) and Generator(X) eq Generator(Y)
+    and Image(X) eq Image(Y);
+end intrinsic;
+
+intrinsic '^'(X :: GrpDrchFFElt, n :: RngIntElt) -> GrpDrchFFElt
+{ The exponentiation of a Dirichlet character X over k(t) by an integer n. }
+  return DirichletCharacter(Modulus(X), Generator(X), Image(X) ^ n);
+end intrinsic;
+
+intrinsic '*'(X :: GrpDrchFFElt, Y :: GrpDrchFFElt) -> GrpDrchFFElt
+{ The multiplication of two Dirichlet characters X and Y over k(t). Note that
+  this has not been implemented when X and Y have different moduli in k[t]. }
+  M := Modulus(X);
+  require M eq Modulus(Y):
+    "This has not been implemented for different moduli.";
+  X := Canonise(X);
+  return DirichletCharacter(M, Generator(X), Image(X) * Image(Canonise(Y)));
+end intrinsic;
+
+intrinsic '/'(X :: GrpDrchFFElt, Y :: GrpDrchFFElt) -> GrpDrchFFElt
+{ The division of two Dirichlet characters X and Y over k(t). Note that this has
+  only been implemented when X and Y have the same modulus in k[t]. }
+  return X * Inverse(Y);
 end intrinsic;
 
 intrinsic ResidueImage(X :: GrpDrchFFElt) -> FldCycElt
