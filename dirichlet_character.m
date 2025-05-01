@@ -1,8 +1,8 @@
 /* L-FUNCTIONS OF DIRICHLET CHARACTERS OVER GLOBAL FUNCTION FIELDS
 
 Let X be a Dirichlet character over a global function field K of a smooth proper
-geometrically irreducible curve of genus g over a finite field k of order q,
-with modulus a non-zero element M of k[t]. The motive [X] associated to X has
+geometrically irreducible curve of genus g over a finite field k of size q, with
+modulus a non-zero element M of k[t]. The motive [X] associated to X has
 w(X) := w([X]) = 0, and its l-adic realisation is simply the complex Galois
 representation associated to X. Assume for now that M is irreducible.
 
@@ -42,7 +42,7 @@ end function;
 
 intrinsic EulerPhi(M :: RngUPolElt[FldFin]) -> RngIntElt
 { The Euler totient function Phi(M) over k(t) for a non-zero modulus M in k[t].
-  This is the order of the unit group of k[t] / M. }
+  This is the size of the unit group of k[t] / M. }
   require M ne 0: "The modulus M is the zero polynomial of k[t].";
   return EulerPhiWithF(Factorization(Numerator(M)));
 end intrinsic;
@@ -57,7 +57,7 @@ function IsGeneratorWithPhi(M, x, phi, fac)
   return Modexp(x, phi, M) eq 1 and &and[Modexp(x, m, M) ne 1 : m in fac];
 end function;
 
-intrinsic IsGenerator(M :: RngUPolElt[FldFin], x :: Any) -> Bool
+intrinsic IsGenerator(M :: RngUPolElt[FldFin], x :: Any) -> BoolElt
 { The predicate that checks whether an element x in k[t] / M for a non-zero
   modulus M in k[t] is a generator of its unit group. }
   R<t> := Parent(M);
@@ -67,7 +67,7 @@ intrinsic IsGenerator(M :: RngUPolElt[FldFin], x :: Any) -> Bool
       [phi div m[1] : m in Factorization(phi)]);
 end intrinsic;
 
-intrinsic IsGenerator(M :: FldFunRatUElt[FldFin], x :: Any) -> Bool
+intrinsic IsGenerator(M :: FldFunRatUElt[FldFin], x :: Any) -> BoolElt
 { " }
   require Denominator(M) eq 1: "The modulus M is not an element of k[t].";
   return IsGenerator(Numerator(M), x);
@@ -151,13 +151,13 @@ end intrinsic;
 declare type GrpDrchFF[GrpDrchFFElt];
 
 declare attributes GrpDrchFF: Modulus, Generator,
-  BaseRing, Characteristic, Domain, EulerPhi, Codomain,
+  BaseRing, Characteristic, Domain, Size, Codomain,
   ResidueDegree, ResidueField, ResidueGenerator, ResidueSize, SqrtResidueSize;
 
 intrinsic DirichletGroup(M :: RngUPolElt[FldFin], g :: Any) -> GrpDrchFF
-{ The character group over k(t) of modulus a non-zero irreducible polynomial M
-  of k[t], given by mapping an element g of k[t] that is a unit and a generator
-  when reduced modulo M, to elements in cyclotomic fields. }
+{ The group of Dirichlet characters over k(t) of modulus a non-zero irreducible
+  polynomial M of k[t], given by mapping an element g of k[t] that is a unit and
+  a generator when reduced modulo M, to elements in cyclotomic fields. }
   require IsIrreducible(M): "The modulus M is not a prime element of k[t].";
   require IsCoercible(Parent(M), g):
     "The generator g is not an element of k[t].";
@@ -184,18 +184,18 @@ intrinsic DirichletGroup(M :: FldFunRatUElt[FldFin]) -> GrpDrchFF
 end intrinsic;
 
 intrinsic Modulus(G :: GrpDrchFF) -> RngUPolElt[FldFin]
-{ The modulus of a character group G over k(t). }
+{ The modulus of a group G of Dirichlet characters over k(t). }
   return G`Modulus;
 end intrinsic;
 
 intrinsic Generator(G :: GrpDrchFF) -> RngUPolElt[FldFin]
-{ The generator of the unit group of k[t] / M for a non-zero modulus M in k[t]
-  that defines a character group G over k(t) of modulus M. }
+{ The generator of the unit group of k[t] / M that defines a group G of
+  Dirichlet characters over k(t) of a non-zero modulus M in k[t]. }
   return G`Generator;
 end intrinsic;
 
 intrinsic BaseRing(G :: GrpDrchFF) -> RngUPol[FldFin]
-{ The base ring k[t] of a character group G over k(t). }
+{ The base ring k[t] for a group G of Dirichlet characters over k(t). }
   if not assigned G`BaseRing then
     G`BaseRing := Parent(Modulus(G));
   end if;
@@ -203,7 +203,7 @@ intrinsic BaseRing(G :: GrpDrchFF) -> RngUPol[FldFin]
 end intrinsic;
 
 intrinsic Characteristic(G :: GrpDrchFF) -> RngIntElt
-{ The characteristic char(k(t)) of a character group G over k(t). }
+{ The characteristic char(k) for a group G of Dirichlet characters over k(t). }
   if not assigned G`Characteristic then
     G`Characteristic := Characteristic(BaseRing(G));
   end if;
@@ -211,33 +211,35 @@ intrinsic Characteristic(G :: GrpDrchFF) -> RngIntElt
 end intrinsic;
 
 intrinsic Domain(G :: GrpDrchFF) -> FldFunRat[FldFin]
-{ The domain k(t) of a character group G over k(t). }
+{ The domain k(t) of a Dirichlet character in a group G of Dirichlet characters
+  over k(t). This is the field of fractions of its base ring k[t]. }
   if not assigned G`Domain then
     G`Domain := FieldOfFractions(BaseRing(G));
   end if;
   return G`Domain;
 end intrinsic;
 
-intrinsic EulerPhi(G :: GrpDrchFF) -> RngIntElt
-{ The Euler totient function Phi(M) of a character group G over k(t) of a
-  non-zero modulus M in k[t]. This is the order of the unit group of k[t] / M. }
-  if not assigned G`EulerPhi then
-    G`EulerPhi := EulerPhi(Modulus(G));
+intrinsic Size(G :: GrpDrchFF) -> RngIntElt
+{ The size of a group G of Dirichlet characters over k(t) of a non-zero modulus
+  M in k[t]. This is the Euler totient function Phi(M) of M. }
+  if not assigned G`Size then
+    G`Size := EulerPhi(Modulus(G));
   end if;
-  return G`EulerPhi;
+  return G`Size;
 end intrinsic;
 
 intrinsic Codomain(G :: GrpDrchFF) -> FldCyc
-{ The codomain of a character group G over k(t). }
+{ The codomain of a Dirichlet character in a group G of Dirichlet characters
+  over k(t). This is a cyclotomic field of modulus equal to the size of G. }
   if not assigned G`Codomain then
-    G`Codomain := CyclotomicField(EulerPhi(G));
+    G`Codomain := CyclotomicField(Size(G));
   end if;
   return G`Codomain;
 end intrinsic;
 
 intrinsic ResidueDegree(G :: GrpDrchFF) -> RngIntElt
-{ The residue degree deg(M) of a character group G over k(t) of a non-zero
-  modulus M in k[t]. }
+{ The residue degree for a group G of Dirichlet characters over k(t) of a
+  non-zero modulus M in k[t]. This is equal to the degree deg(M) of M. }
   if not assigned G`ResidueDegree then
     G`ResidueDegree := Degree(Modulus(G));
   end if;
@@ -245,7 +247,7 @@ intrinsic ResidueDegree(G :: GrpDrchFF) -> RngIntElt
 end intrinsic;
 
 intrinsic ResidueField(G :: GrpDrchFF) -> FldFin
-{ The residue field k of a character group G over k(t). }
+{ The residue field k for a group G of Dirichlet characters over k(t). }
   if not assigned G`ResidueField then
     G`ResidueField := BaseRing(BaseRing(G));
   end if;
@@ -253,7 +255,7 @@ intrinsic ResidueField(G :: GrpDrchFF) -> FldFin
 end intrinsic;
 
 intrinsic ResidueGenerator(G :: GrpDrchFF) -> FldFinElt
-{ The generator of the residue field k of a character group G over k(t). }
+{ The generator of k for a group G of Dirichlet characters over k(t). }
   if not assigned G`ResidueGenerator then
     G`ResidueGenerator := PrimitiveElement(ResidueField(G));
   end if;
@@ -261,30 +263,27 @@ intrinsic ResidueGenerator(G :: GrpDrchFF) -> FldFinElt
 end intrinsic;
 
 intrinsic ResidueSize(G :: GrpDrchFF) -> RngIntElt
-{ The size #k of the residue field k of a character group G over k(t). }
+{ The residue field size #k for a group G of Dirichlet characters over k(t). }
   if not assigned G`ResidueSize then
     G`ResidueSize := #ResidueField(G);
   end if;
   return G`ResidueSize;
 end intrinsic;
 
-function SqrtResidueSizeFunc(G)
-  q := ResidueSize(G);
-  rad_q := Squarefree(q);
-  return Sqrt(CyclotomicField(rad_q * (rad_q mod 4 eq 1 select 1 else 4)) ! q);
-end function;
-
 intrinsic SqrtResidueSize(G :: GrpDrchFF) -> FldCycElt
-{ The square root of the size #k of the residue field k of a character group G
-  over k(t) in its minimal cyclotomic field. }
+{ The square root of #k for a group G of Dirichlet characters over k(t) as an
+  element of its minimal cyclotomic field. }
   if not assigned G`SqrtResidueSize then
-    G`SqrtResidueSize := SqrtResidueSizeFunc(G);
+    q := ResidueSize(G);
+    rad_q := Squarefree(q);
+    G`SqrtResidueSize :=
+      Sqrt(CyclotomicField(rad_q * (rad_q mod 4 eq 1 select 1 else 4)) ! q);
   end if;
   return G`SqrtResidueSize;
 end intrinsic;
 
 intrinsic Print(G :: GrpDrchFF)
-{ The printing of a character group G over k(t). }
+{ The printing of a group G of Dirichlet characters over k(t). }
   K<t> := Domain(G);
   printf "Character group over F_%o(%o) of modulus %o with generator %o",
     ResidueSize(G), t, Modulus(G), K ! Generator(G);
@@ -292,10 +291,8 @@ end intrinsic;
 
 declare type GrpDrchFFElt;
 
-declare attributes GrpDrchFFElt: Modulus, Generator, Image,
-  BaseRing, Characteristic, Codomain, Domain, EulerPhi, Order,
-  ResidueDegree, ResidueField, ResidueGenerator, ResidueSize, SqrtResidueSize,
-  Inverse, ResidueImage, ResidueCodomain, ResidueCharacter, ResidueOrder,
+declare attributes GrpDrchFFElt: Parent, Image, Order, Inverse,
+  ResidueImage, ResidueCodomain, ResidueCharacter, ResidueOrder,
   IsEven, IsOdd, CharacterSum, EpsilonFactor, ResidueGaussSum, GaussSum,
   Conductor, LDegree, RootNumber;
 
@@ -309,13 +306,9 @@ intrinsic DirichletCharacter(M :: RngUPolElt[FldFin], g :: Any, h :: FldCycElt :
   require IsCoercible(Parent(M), g):
     "The generator g is not an element of k[t].";
   X := New(GrpDrchFFElt);
-  X`Modulus := M;
-  X`Generator := g;
-  if Minimal then
-    X`EulerPhi := EulerPhi(M);
-    h := Minimise(CyclotomicField(X`EulerPhi) ! h);
-  end if;
-  X`Image := h;
+  X`Parent := DirichletGroup(M, g);
+  X`Image :=
+    Minimal select Minimise(CyclotomicField(Size(X`Parent)) ! h) else h;
   return X;
 end intrinsic;
 
@@ -350,24 +343,39 @@ intrinsic DirichletCharacter(M :: FldFunRatUElt[FldFin], g :: Any,
   return DirichletCharacter(M, g, CyclotomicField(1) ! h : Minimal := Minimal);
 end intrinsic;
 
-intrinsic Modulus(X :: GrpDrchFFElt) -> RngUPolElt[FldFin]
-{ The modulus of a Dirichlet character X over k(t). }
-  return X`Modulus;
-end intrinsic;
-
-intrinsic Generator(X :: GrpDrchFFElt) -> RngUPolElt[FldFin]
-{ The generator that defines a Dirichlet character X over k(t). }
-  return X`Generator;
+intrinsic Parent(X :: GrpDrchFFElt) -> GrpDrchFF
+{ The character group of a Dirichlet character X over k(t). }
+  return X`Parent;
 end intrinsic;
 
 intrinsic Image(X :: GrpDrchFFElt) -> FldCycElt
-{ The image of the generator that defines a Dirichlet character X over k(t). }
+{ The image of the generator of the unit group of k[t] / M that defines a
+  Dirichlet character over k(t) of a non-zero modulus M in k[t]. }
   return X`Image;
 end intrinsic;
 
-intrinsic Parent(X :: GrpDrchFFElt) -> GrpDrchFF
-{ The character group of a Dirichlet character X over k(t). }
-  return DirichletGroup(Modulus(X), Generator(X));
+intrinsic Modulus(X :: GrpDrchFFElt) -> RngUPolElt[FldFin]
+{ The modulus of a Dirichlet character X over k(t). }
+  return Modulus(Parent(X));
+end intrinsic;
+
+intrinsic 'in'(X :: GrpDrchFFElt, G :: GrpDrchFF) -> BoolElt
+{ The membership of a Dirichlet character X over k(t) in a group G of Dirichlet
+  characters over k(t). This is true if the modulus of X is the modulus of G. }
+  return Modulus(X) eq Modulus(G);
+end intrinsic;
+
+intrinsic IsCoercible(G :: GrpDrchFF, X :: GrpDrchFFElt)
+  -> BoolElt, GrpDrchFFElt
+{ The coercion of a Dirichlet character X over k(t) to a group G of Dirichlet
+  characters over k(t). This is true and returns X if X is a member of G. }
+  return X in G, X;
+end intrinsic;
+
+intrinsic Generator(X :: GrpDrchFFElt) -> RngUPolElt[FldFin]
+{ The generator of the unit group of k[t] / M that defines a Dirichlet character
+  over k(t) of a non-zero modulus M in k[t]. }
+  return Generator(Parent(X));
 end intrinsic;
 
 intrinsic Minimise(X :: GrpDrchFFElt) -> GrpDrchFFElt
@@ -383,95 +391,57 @@ intrinsic Minimise(~X :: GrpDrchFFElt)
 end intrinsic;
 
 intrinsic BaseRing(X :: GrpDrchFFElt) -> RngUPol[FldFin]
-{ The base ring k[t] of a Dirichlet character X over k(t). }
-  if not assigned X`BaseRing then
-    X`BaseRing := Parent(Modulus(X));
-  end if;
-  return X`BaseRing;
+{ The base ring k[t] for a Dirichlet character X over k(t). }
+  return BaseRing(Parent(X));
 end intrinsic;
 
 intrinsic Characteristic(X :: GrpDrchFFElt) -> RngIntElt
-{ The characteristic char(k(t)) of a Dirichlet character X over k(t). }
-  if not assigned X`Characteristic then
-    X`Characteristic := Characteristic(BaseRing(X));
-  end if;
-  return X`Characteristic;
-end intrinsic;
-
-intrinsic Codomain(X :: GrpDrchFFElt) -> FldCyc
-{ The codomain of a Dirichlet character X over k(t). }
-  if not assigned X`Codomain then
-    X`Codomain := Parent(Image(X));
-  end if;
-  return X`Codomain;
+{ The characteristic char(k) for a Dirichlet character X over k(t). }
+  return Characteristic(Parent(X));
 end intrinsic;
 
 intrinsic Domain(X :: GrpDrchFFElt) -> FldFunRat[FldFin]
 { The domain k(t) of a Dirichlet character X over k(t). }
-  if not assigned X`Domain then
-    X`Domain := FieldOfFractions(BaseRing(X));
-  end if;
-  return X`Domain;
+  return Domain(Parent(X));
 end intrinsic;
 
-intrinsic EulerPhi(X :: GrpDrchFFElt) -> RngIntElt
-{ The Euler totient function Phi(M) of a Dirichlet character X over k(t) of a
-  non-zero modulus M in k[t]. This is the order of the unit group of k[t] / M. }
-  if not assigned X`EulerPhi then
-    X`EulerPhi := EulerPhi(Modulus(X));
-  end if;
-  return X`EulerPhi;
+intrinsic Size(X :: GrpDrchFFElt) -> RngIntElt
+{ The size of the character group of a Dirichlet character X over k(t) of a
+  non-zero modulus M in k[t]. This is the Euler totient function Phi(M) of M. }
+  return Size(Parent(X));
 end intrinsic;
 
-intrinsic Order(X :: GrpDrchFFElt) -> RngIntElt
-{ The order of a Dirichlet character X over k(t) in its character group. }
-  if not assigned X`Order then
-    X`Order := Conductor(Codomain(Minimise(X)));
-  end if;
-  return X`Order;
+intrinsic Codomain(X :: GrpDrchFFElt) -> FldCyc
+{ The codomain of a Dirichlet character X over k(t). This is a cyclotomic field
+  of modulus equal to the size of G. }
+  return Codomain(Parent(X));
 end intrinsic;
 
 intrinsic ResidueDegree(X :: GrpDrchFFElt) -> RngIntElt
-{ The residue degree deg(M) of a Dirichlet character X over k(t) of a non-zero
-  modulus M in k[t]. }
-  if not assigned X`ResidueDegree then
-    X`ResidueDegree := Degree(Modulus(X));
-  end if;
-  return X`ResidueDegree;
+{ The residue degree for a Dirichlet character X over k(t) of a non-zero modulus
+  M in k[t]. This is equal to the degree deg(M) of M. }
+  return ResidueDegree(Parent(X));
 end intrinsic;
 
 intrinsic ResidueField(X :: GrpDrchFFElt) -> FldFin
-{ The residue field k of a Dirichlet character X over k(t). }
-  if not assigned X`ResidueField then
-    X`ResidueField := BaseRing(BaseRing(X));
-  end if;
-  return X`ResidueField;
+{ The residue field k for a Dirichlet character X over k(t). }
+  return ResidueField(Parent(X));
 end intrinsic;
 
 intrinsic ResidueGenerator(X :: GrpDrchFFElt) -> FldFinElt
-{ The generator of the residue field k of a Dirichlet character X over k(t) that
-  defines the character over k associated to X. }
-  if not assigned X`ResidueGenerator then
-    X`ResidueGenerator := PrimitiveElement(ResidueField(X));
-  end if;
-  return X`ResidueGenerator;
+{ The generator of k for a Dirichlet character X over k(t). }
+  return ResidueGenerator(Parent(X));
 end intrinsic;
 
 intrinsic ResidueSize(X :: GrpDrchFFElt) -> RngIntElt
-{ The size #k of the residue field k of a Dirichlet character X over k(t). }
-  if not assigned X`ResidueSize then
-    X`ResidueSize := #ResidueField(X);
-  end if;
-  return X`ResidueSize;
+{ The residue field size #k for a Dirichlet character X over k(t). }
+  return ResidueSize(Parent(X));
 end intrinsic;
 
 intrinsic SqrtResidueSize(X :: GrpDrchFFElt) -> FldCycElt
-{ The square root of the size #k of the residue field k of a Dirichlet character
-  X over k(t) in its minimal cyclotomic field. }
-  if not assigned X`SqrtResidueSize then
-    X`SqrtResidueSize := SqrtResidueSizeFunc(X);
-  end if;
-  return X`SqrtResidueSize;
+{ The square root of #k for a Dirichlet character X over k(t) as an element of
+  its minimal cyclotomic field. }
+  return SqrtResidueSize(Parent(X));
 end intrinsic;
 
 intrinsic Print(X :: GrpDrchFFElt)
@@ -482,6 +452,14 @@ intrinsic Print(X :: GrpDrchFFElt)
     ResidueSize(X), t, Modulus(X), K ! Generator(X), Image(X);
 end intrinsic;
 
+intrinsic Order(X :: GrpDrchFFElt) -> RngIntElt
+{ The order of a Dirichlet character X over k(t) in its character group. }
+  if not assigned X`Order then
+    X`Order := Conductor(Codomain(Minimise(X)));
+  end if;
+  return X`Order;
+end intrinsic;
+
 function Evaluate(X, x)
   M := Modulus(X);
   return BaseRing(X) ! x mod M eq 0 select 0 else
@@ -489,7 +467,8 @@ function Evaluate(X, x)
 end function;
 
 intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> FldCycElt
-{ The evaluation of a Dirichlet character X over k(t) on an element x of k[t]. }
+{ The evaluation of a Dirichlet character X over k(t) on either an element x of
+  k[t], or on 1 / t, in which case this is 1. }
   K<t> := Domain(X);
   require IsCoercible(K, x): "The element x is not an element of k(t).";
   x := K ! x;
@@ -499,8 +478,8 @@ intrinsic '@'(x :: Any, X :: GrpDrchFFElt) -> FldCycElt
 end intrinsic;
 
 intrinsic Inverse(X :: GrpDrchFFElt) -> GrpDrchFFElt
-{ The inverse of a Dirichlet character X over k(t). Note that this is also equal
-  to the complex conjugate of X. }
+{ The inverse of a Dirichlet character X over k(t). This is also equal to the
+  complex conjugate of X. }
   if not assigned X`Inverse then
     X`Inverse := DirichletCharacter(Modulus(X), Generator(X), 1 / Image(X));
   end if;
@@ -520,7 +499,7 @@ intrinsic Canonise(~X :: GrpDrchFFElt)
   X := Canonise(X);
 end intrinsic;
 
-intrinsic 'eq'(X :: GrpDrchFFElt, Y :: GrpDrchFFElt) -> Bool
+intrinsic 'eq'(X :: GrpDrchFFElt, Y :: GrpDrchFFElt) -> BoolElt
 { The equality of two Dirichlet characters X and Y over k(t). }
   X := Canonise(X);
   Y := Canonise(Y);
@@ -545,14 +524,14 @@ end intrinsic;
 
 intrinsic '/'(X :: GrpDrchFFElt, Y :: GrpDrchFFElt) -> GrpDrchFFElt
 { The division of two Dirichlet characters X and Y over k(t). Note that this has
-  only been implemented when X and Y have the same modulus in k[t]. }
+  not been implemented when X and Y have different moduli in k[t]. }
   return X * Inverse(Y);
 end intrinsic;
 
 intrinsic ResidueImage(X :: GrpDrchFFElt) -> FldCycElt
-{ The image of the generator of the residue field k of a Dirichlet character X
-  over k(t) that defines the character over k associated to X. Note that this
-  image is coerced to its minimal cyclotomic field. }
+{ The image of the generator of k that defines the character over k associated
+  to a Dirichlet character X over k(t). Note that this image is coerced to its
+  minimal cyclotomic field. }
   if not assigned X`ResidueImage then
     X`ResidueImage := Minimise(X(ResidueGenerator(X)));
   end if;
@@ -569,9 +548,9 @@ intrinsic ResidueCodomain(X :: GrpDrchFFElt) -> FldCyc
 end intrinsic;
 
 intrinsic ResidueCharacter(X :: GrpDrchFFElt) -> GrpDrchFFElt
-{ The character over k associated to a Dirichlet character X over k(t). This
-  is a Dirichlet character over k(t) of modulus t - 1, whose image of generator
-  is coerced to its minimal cyclotomic field. }
+{ The character over k associated to a Dirichlet character X over k(t). This is
+  a Dirichlet character over k(t) of modulus t - 1, whose image of generator is
+  coerced to its minimal cyclotomic field. }
   if not assigned X`ResidueCharacter then
     X`ResidueCharacter := DirichletCharacter(Domain(X).1 - 1,
         ResidueGenerator(X), ResidueImage(X));
@@ -588,7 +567,7 @@ intrinsic ResidueOrder(X :: GrpDrchFFElt) -> RngIntElt
   return X`ResidueOrder;
 end intrinsic;
 
-intrinsic IsEven(X :: GrpDrchFFElt) -> Bool
+intrinsic IsEven(X :: GrpDrchFFElt) -> BoolElt
 { The parity of a Dirichlet character X over k(t). This is true if X is even,
   namely that X is trivial on all elements of k. }
   if not assigned X`IsEven then
@@ -597,7 +576,7 @@ intrinsic IsEven(X :: GrpDrchFFElt) -> Bool
   return X`IsEven;
 end intrinsic;
 
-intrinsic IsOdd(X :: GrpDrchFFElt) -> Bool
+intrinsic IsOdd(X :: GrpDrchFFElt) -> BoolElt
 { The parity of a Dirichlet character X over k(t). This is true if X is odd,
   namely that X is not trivial on some element of k. }
   if not assigned X`IsOdd then
