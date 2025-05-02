@@ -1,7 +1,7 @@
 /* L-FUNCTIONS OF DIRICHLET TWISTED ELLIPTIC CURVES OVER GLOBAL FUNCTION FIELDS
 
 Let E be an elliptic curve over a global function field K of a smooth proper
-geometrically irreducible curve of genus g over a finite field k of order q, and
+geometrically irreducible curve of genus g over a finite field k of size q, and
 let X be a Dirichlet character over K, with modulus a non-zero element M of
 k[t]. Assume that the conductors of E and X have disjoint support, and assume
 for now that M is irreducible.

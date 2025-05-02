@@ -1,7 +1,7 @@
 /* L-FUNCTIONS OF ELLIPTIC CURVES OVER GLOBAL FUNCTION FIELDS
 
 Let E be an elliptic curve over a global function field K of a smooth proper
-geometrically irreducible curve of genus g over a finite field k of order q. The
+geometrically irreducible curve of genus g over a finite field k of size q. The
 motive h^1(E)(1) associated to E is self dual with w(E) := w(h^1(E)(1)) = 1,
 whose l-adic realisation is the dual H_l(E) of the two-dimensional l-adic
 rational Tate module of E. This has geometric Galois invariants precisely when E
@@ -12,7 +12,7 @@ curve E' over k, in which case the formal L-function L(E, T) of E is precisely
 In general, the local Euler factor L_v(E, T) of E at a place v of K depends on
 the reduction E_v of a model of E that is minimal at v. If E has good reduction
 at v, then the trace of Frobenius a_v(E) at v acting on H_l(E) is
-1 - #E_v + q_v, where q_v is the order of the residue field at v, in which case
+1 - #E_v + q_v, where q_v is the size of the residue field at v, in which case
 L_v(E, T) is given by 1 - a_v(E) T + q_v T^2. Otherwise, a_v(E) is 1 if the
 reduction is split multiplicative, -1 if it is non-split multiplicative, and 0
 if it is additive, in which case L_v(E, T) is given by 1 - a_v(E) T.

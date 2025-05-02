@@ -1,8 +1,8 @@
 /* MOTIVIC L-FUNCTIONS OVER GLOBAL FUNCTION FIELDS
 
 Let M be a motive with coefficients in the global function field K of a smooth
-proper geometrically irreducible curve of genus g over a finite field of order
-q. For a prime l not dividing q, its l-adic realisation M_l defines a univariate
+proper geometrically irreducible curve of genus g over a finite field of size q.
+For a prime l not dividing q, its l-adic realisation M_l defines a univariate
 power series over Q_l-bar called its formal L-function L(M, T), which is defined
 to be the formal product of the reciprocals of L_v(M, T^(deg v)) over all the
 places v of K. Here, the local Euler factor L_v(M, T) is a univariate polynomial
