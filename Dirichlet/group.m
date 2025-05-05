@@ -17,33 +17,26 @@ declare attributes GrpDrchFF: Modulus, Generator,
   BaseRing, Characteristic, Domain, Size, Codomain,
   ResidueDegree, ResidueField, ResidueGenerator, ResidueSize, SqrtResidueSize;
 
-intrinsic DirichletGroup(M :: RngUPolElt[FldFin], g :: Any) -> GrpDrchFF
+intrinsic DirichletGroup(M :: RngUPolElt[FldFin] :
+    Generator := MinimalGenerator(M)) -> GrpDrchFF
 { The group of Dirichlet characters over k(t) of modulus an irreducible
-  polynomial M of k[t], given by mapping an element g of k[t] that is a unit and
-  a generator when reduced modulo M, to elements in cyclotomic fields. }
+  polynomial M of k[t], given by mapping an element of k[t] that is a unit and a
+  Generator when reduced modulo M, to elements in cyclotomic fields. By default,
+  Generator is set to be the minimal generator of the unit group of k[t] / M. }
   require IsIrreducible(M): "The modulus M is not a prime element of k[t].";
-  require IsCoercible(Parent(M), g):
-    "The generator g is not an element of k[t].";
+  require IsCoercible(Parent(M), Generator):
+    "The generator is not an element of k[t].";
   G := New(GrpDrchFF);
   G`Modulus := M;
-  G`Generator := g;
+  G`Generator := Generator;
   return G;
 end intrinsic;
 
-intrinsic DirichletGroup(M :: RngUPolElt[FldFin]) -> GrpDrchFF
-{ " }
-  return DirichletGroup(M, Generator(M));
-end intrinsic;
-
-intrinsic DirichletGroup(M :: FldFunRatUElt[FldFin], g :: Any) -> GrpDrchFF
+intrinsic DirichletGroup(M :: FldFunRatUElt[FldFin] :
+    Generator := MinimalGenerator(M)) -> GrpDrchFF
 { " }
   require Denominator(M) eq 1: "The modulus M is not an element of k[t].";
-  return DirichletGroup(Numerator(M), g);
-end intrinsic;
-
-intrinsic DirichletGroup(M :: FldFunRatUElt[FldFin]) -> GrpDrchFF
-{ " }
-  return DirichletGroup(M, Generator(M));
+  return DirichletGroup(Numerator(M) : Generator := Generator);
 end intrinsic;
 
 intrinsic Modulus(G :: GrpDrchFF) -> RngUPolElt[FldFin]
@@ -55,6 +48,17 @@ intrinsic Generator(G :: GrpDrchFF) -> RngUPolElt[FldFin]
 { The generator of the unit group of k[t] / M that defines a group G of
   Dirichlet characters over k(t) of a non-zero modulus M in k[t]. }
   return G`Generator;
+end intrinsic;
+
+intrinsic ChangeGenerator(G :: GrpDrchFF, g :: Any) -> GrpDrchFFElt
+{ The same group G of Dirichlet characters over k(t), but whose generator is
+  changed to an element g of k[t]. }
+  return DirichletGroup(Modulus(G) : Generator := g);
+end intrinsic;
+
+intrinsic ChangeGenerator(~G :: GrpDrchFF, g :: Any)
+{ " }
+  G := ChangeGenerator(G, g);
 end intrinsic;
 
 intrinsic BaseRing(G :: GrpDrchFF) -> RngUPol[FldFin]

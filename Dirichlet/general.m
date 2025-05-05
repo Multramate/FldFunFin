@@ -8,7 +8,8 @@ line over a finite field k, which includes:
 - Log: the discrete logarithm in the unit group of k[t] / M
 - IsGenerator: checks if an element of k[t] / M is a generator of its unit group
 - Generators: the set of generators of the unit group of k[t] / M
-- Generator: a generator of the unit group of k[t] / M
+- MinimalGenerator: the minimal generator of the unit group of k[t] / M
+- RandomGenerator: a random generator of the unit group of k[t] / M
 */
 
 intrinsic AllMonicPolynomials(k :: FldFin, D :: RngIntElt)
@@ -120,18 +121,37 @@ intrinsic Generators(M :: FldFunRatUElt[FldFin]) -> SetEnum[RngUPolElt[FldFin]]
   return Generators(Numerator(M));
 end intrinsic;
 
-function GeneratorWithPhi(M, phi, fac)
+function MinimalGeneratorWithPhi(M, phi, fac)
   return Minimum(GeneratorsWithPhi(M, phi, fac));
 end function;
 
-intrinsic Generator(M :: RngUPolElt[FldFin]) -> RngUPolElt[FldFin]
-{ A generator of the unit group of k[t] / M for a non-zero modulus M in k[t]. }
+intrinsic MinimalGenerator(M :: RngUPolElt[FldFin]) -> RngUPolElt[FldFin]
+{ The generator of the unit group of k[t] / M for a non-zero modulus M in k[t]
+  that is minimal with respect to the ordering on polynomials over k. }
   phi := EulerPhi(M);
-  return GeneratorWithPhi(M, phi, [phi div m[1] : m in Factorization(phi)]);
+  return
+    MinimalGeneratorWithPhi(M, phi, [phi div m[1] : m in Factorization(phi)]);
 end intrinsic;
 
-intrinsic Generator(M :: FldFunRatUElt[FldFin]) -> RngUPolElt[FldFin]
+intrinsic MinimalGenerator(M :: FldFunRatUElt[FldFin]) -> RngUPolElt[FldFin]
 { " }
   require Denominator(M) eq 1: "The modulus M is not an element of k[t].";
-  return Generator(Numerator(M));
+  return MinimalGenerator(Numerator(M));
+end intrinsic;
+
+function RandomGeneratorWithPhi(M, phi, fac)
+  return Random(GeneratorsWithPhi(M, phi, fac));
+end function;
+
+intrinsic RandomGenerator(M :: RngUPolElt[FldFin]) -> RngUPolElt[FldFin]
+{ A generator of the unit group of k[t] / M for a non-zero modulus M in k[t]. }
+  phi := EulerPhi(M);
+  return
+    RandomGeneratorWithPhi(M, phi, [phi div m[1] : m in Factorization(phi)]);
+end intrinsic;
+
+intrinsic RandomGenerator(M :: FldFunRatUElt[FldFin]) -> RngUPolElt[FldFin]
+{ " }
+  require Denominator(M) eq 1: "The modulus M is not an element of k[t].";
+  return RandomGenerator(Numerator(M));
 end intrinsic;
