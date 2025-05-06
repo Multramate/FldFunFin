@@ -63,7 +63,7 @@ intrinsic GaussSum(X :: GrpDrchFFElt) -> FldCycElt
   degree of M, weighted by the Hayes exponential function of x / M. }
   if not assigned X`GaussSum then
     X`GaussSum := EpsilonFactor(X)
-      * IsEven(X) select ResidueSize(X) else ResidueGaussSum(X);
+      * (IsEven(X) select ResidueSize(X) else ResidueGaussSum(X));
   end if;
   return X`GaussSum;
 end intrinsic;

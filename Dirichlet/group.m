@@ -51,8 +51,8 @@ intrinsic Generator(G :: GrpDrchFF) -> RngUPolElt[FldFin]
 end intrinsic;
 
 intrinsic ChangeGenerator(G :: GrpDrchFF, g :: Any) -> GrpDrchFFElt
-{ The same group G of Dirichlet characters over k(t), but whose generator is
-  changed to an element g of k[t]. }
+{ The same group G of Dirichlet characters over k(t) of a non-zero modulus M in
+  k[t] with generator changed to a generator g of the unit group of k[t] / M. }
   return DirichletGroup(Modulus(G) : Generator := g);
 end intrinsic;
 
