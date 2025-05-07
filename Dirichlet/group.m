@@ -14,7 +14,7 @@ the global function field k(t) of the projective line over a finite field k.
 declare type GrpDrchFF[GrpDrchFFElt];
 
 declare attributes GrpDrchFF: Modulus, Generator,
-  BaseRing, Characteristic, Domain, Size, Codomain,
+  BaseRing, Characteristic, Domain, Size, Characters, Codomain,
   ResidueDegree, ResidueField, ResidueGenerator, ResidueSize, SqrtResidueSize;
 
 intrinsic DirichletGroup(M :: RngUPolElt[FldFin] :
@@ -95,6 +95,20 @@ intrinsic Size(G :: GrpDrchFF) -> RngIntElt
   return G`Size;
 end intrinsic;
 
+intrinsic Characters(G :: GrpDrchFF) -> SeqEnum[GrpDrchFFElt]
+{ The finite set of Dirichlet characters over k(t) underlying a group G of
+  Dirichlet characters over k(t). }
+  if not assigned G`Characters then
+    X := DirichletCharacter(Modulus(G));
+    G`Characters := [G | ];
+    G`Characters[1] := DirichletCharacter(Modulus(G) : Image := 1);
+    for n := 1 to Size(G) - 1 do
+      G`Characters[n + 1] := G`Characters[n] * X;
+    end for;
+  end if;
+  return G`Characters;
+end intrinsic;
+
 intrinsic Codomain(G :: GrpDrchFF) -> FldCyc
 { The codomain of a Dirichlet character in a group G of Dirichlet characters
   over k(t). This is a cyclotomic field of modulus equal to the size of G. }
@@ -154,4 +168,10 @@ intrinsic Print(G :: GrpDrchFF)
   K<t> := Domain(G);
   printf "Character group over F_%o(%o) of modulus %o with generator %o",
     ResidueSize(G), t, Modulus(G), K ! Generator(G);
+end intrinsic;
+
+intrinsic Random(G :: GrpDrchFF) -> GrpDrchFFElt
+{ A random Dirichlet character over k(t) underlying a group G of Dirichlet
+  characters over k(t). }
+  return Random(Characters(G));
 end intrinsic;

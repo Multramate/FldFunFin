@@ -30,9 +30,9 @@ intrinsic DirichletCharacter(M :: RngUPolElt[FldFin] :
     "The generator is not an element of k[t].";
   X := New(GrpDrchFFElt);
   X`Parent := DirichletGroup(M : Generator := Generator);
-  C<z> := Codomain(X`Parent);
+  C := Codomain(X`Parent);
   coercible, h := IsCoercible(C, Image);
-  X`Image := coercible select Minimise(h) else z;
+  X`Image := coercible select Minimise(h) else C.1;
   return X;
 end intrinsic;
 
