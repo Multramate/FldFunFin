@@ -14,7 +14,8 @@ the global function field k(t) of the projective line over a finite field k.
 declare type GrpDrchFF[GrpDrchFFElt];
 
 declare attributes GrpDrchFF: Modulus, Generator,
-  BaseRing, Characteristic, Domain, Size, Characters, Codomain,
+  BaseRing, Characteristic, Domain, Size, Codomain,
+  One, Characters, Group, Isomorphism,
   ResidueDegree, ResidueField, ResidueGenerator, ResidueSize, SqrtResidueSize;
 
 intrinsic DirichletGroup(M :: RngUPolElt[FldFin] :
@@ -26,6 +27,8 @@ intrinsic DirichletGroup(M :: RngUPolElt[FldFin] :
   require IsIrreducible(M): "The modulus M is not a prime element of k[t].";
   require IsCoercible(Parent(M), Generator):
     "The generator is not an element of k[t].";
+  require IsGenerator(M, Generator):
+    "The generator is not a generator of the unit group of k[t] / M.";
   G := New(GrpDrchFF);
   G`Modulus := M;
   G`Generator := Generator;
@@ -86,7 +89,7 @@ intrinsic Domain(G :: GrpDrchFF) -> FldFunRat[FldFin]
   return G`Domain;
 end intrinsic;
 
-intrinsic Size(G :: GrpDrchFF) -> RngIntElt
+intrinsic '#'(G :: GrpDrchFF) -> RngIntElt
 { The size of a group G of Dirichlet characters over k(t) of a non-zero modulus
   M in k[t]. This is the Euler totient function Phi(M) of M. }
   if not assigned G`Size then
@@ -95,27 +98,76 @@ intrinsic Size(G :: GrpDrchFF) -> RngIntElt
   return G`Size;
 end intrinsic;
 
+intrinsic Codomain(G :: GrpDrchFF) -> FldCyc
+{ The codomain of a Dirichlet character in a group G of Dirichlet characters
+  over k(t). This is a cyclotomic field of modulus equal to the size of G. }
+  if not assigned G`Codomain then
+    G`Codomain := CyclotomicField(#G);
+  end if;
+  return G`Codomain;
+end intrinsic;
+
+intrinsic IsCoercible(G :: GrpDrchFF, X :: Any) -> BoolElt, Any
+{ The coercion of X to a group G of Dirichlet characters over k(t). This is true
+  if X is a Dirichlet character over k(t) in the finite set underlying G, in
+  which case it returns X with generator changed to the generator of G, or if X
+  is an element of some cyclotomic field equal to the image of the generator of
+  some Dirichlet character over k(t) in G, in which case it returns a Dirichlet
+  character over k(t) with generator equal to the generator of G and image X. }
+  if Type(X) eq GrpDrchFFElt then
+    bool := Characteristic(X) eq Characteristic(G) and Modulus(X) eq Modulus(G);
+    return bool, bool select ChangeGenerator(X, Generator(G)) else
+      "The modulus of G is different from the modulus of X.";
+  else
+    coercible, h := IsCoercible(Codomain(G), X);
+    try
+      return coercible, coercible select DirichletCharacter(G : Image := h) else
+        "X is neither a Dirichlet character nor a cyclotomic element.";
+    catch e
+      return false, e`Object;
+    end try;
+  end if;
+end intrinsic;
+
+intrinsic 'in'(X :: Any, G :: GrpDrchFF) -> BoolElt
+{ The membership of X in a group G of Dirichlet characters over k(t). This is
+  true if X is a Dirichlet character over k(t) in the finite set underlying G or
+  if X is an element of some cyclotomic field equal to the image of the
+  generator of some Dirichlet character over k(t) in G. }
+  return IsCoercible(G, X);
+end intrinsic;
+
+intrinsic One(G :: GrpDrchFF) -> GrpDrchFFElt
+{ The identity of a group G of Dirichlet characters over k(t). }
+  if not assigned G`One then
+    G`One := G ! 1;
+  end if;
+  return G`One;
+end intrinsic;
+
 intrinsic Characters(G :: GrpDrchFF) -> SeqEnum[GrpDrchFFElt]
 { The finite set of Dirichlet characters over k(t) underlying a group G of
   Dirichlet characters over k(t). }
   if not assigned G`Characters then
-    X := DirichletCharacter(Modulus(G));
-    G`Characters := [G | ];
-    G`Characters[1] := DirichletCharacter(Modulus(G) : Image := 1);
-    for n := 1 to Size(G) - 1 do
+    X := DirichletCharacter(G);
+    G`Characters := [G | One(G)];
+    for n := 1 to #G - 1 do
       G`Characters[n + 1] := G`Characters[n] * X;
     end for;
   end if;
   return G`Characters;
 end intrinsic;
 
-intrinsic Codomain(G :: GrpDrchFF) -> FldCyc
-{ The codomain of a Dirichlet character in a group G of Dirichlet characters
-  over k(t). This is a cyclotomic field of modulus equal to the size of G. }
-  if not assigned G`Codomain then
-    G`Codomain := CyclotomicField(Size(G));
+intrinsic Group(G :: GrpDrchFF) -> GrpAb, Map
+{ The abstract additive abelian group A isomorphic to a group G of Dirichlet
+  characters over k(t) and its associated isomorphism map from A to G. }
+  if not assigned G`Group or not assigned G`Isomorphism then
+    G`Group := AbelianGroup([#G]);
+    characters := Characters(G);
+    G`Isomorphism := hom<G`Group -> G | x :-> characters[Eltseq(x)[1] + 1],
+        y :-> G`Group ! (Index(characters, y) - 1)>;
   end if;
-  return G`Codomain;
+  return G`Group, G`Isomorphism;
 end intrinsic;
 
 intrinsic ResidueDegree(G :: GrpDrchFF) -> RngIntElt

@@ -14,26 +14,41 @@ function field k(t) of the projective line over a finite field k.
 declare type GrpDrchFFElt;
 
 declare attributes GrpDrchFFElt: Parent, Image, Codomain, Order, Inverse,
-  ResidueImage, ResidueCodomain, ResidueCharacter, ResidueOrder, IsEven, IsOdd,
+  ResidueImage, ResidueCodomain, ResidueCharacter, ResidueOrder,
+  IsTrivial, IsPrimitive, IsEven, IsOdd,
   CharacterSum, EpsilonFactor, ResidueGaussSum, GaussSum,
   Conductor, LDegree, RootNumber;
+
+intrinsic DirichletCharacter(G :: GrpDrchFF : Image) -> GrpDrchFFElt
+{ The Dirichlet character over k(t) in a group G of Dirichlet characters over
+  k(t) given by mapping its generator to an Image that is some root of unity in
+  its minimal cyclotomic field of order dividing the size of G. By default,
+  Image is set to be the generator of the codomain of G. }
+  X := New(GrpDrchFFElt);
+  X`Parent := G;
+  C := Codomain(G);
+  coercible, h := IsCoercible(C, Image);
+  X`Image := coercible select Minimise(h) else C.1;
+  require X`Image ^ #G eq 1:
+    "The image is not a root of unity of order dividing the size of G.";
+  return X;
+end intrinsic;
 
 intrinsic DirichletCharacter(M :: RngUPolElt[FldFin] :
     Generator := MinimalGenerator(M), Image) -> GrpDrchFFElt
 { The Dirichlet character over k(t) of modulus an irreducible polynomial M of
   k[t], given by mapping an element of k[t] that is a unit and a Generator when
-  reduced modulo M, to an Image in some minimal cyclotomic field. By default,
-  Generator is set to be the minimal generator of the unit group of k[t] / M,
-  and Image is set to be the generator of the codomain of its character group. }
+  reduced modulo M, to an Image that is some root of unity in its minimal
+  cyclotomic field of order dividing the size of G. By default, Generator is set
+  to be the minimal generator of the unit group of k[t] / M, and Image is set to
+  be the generator of the codomain of its character group. }
   require IsIrreducible(M): "The modulus M is not a prime element of k[t].";
   require IsCoercible(Parent(M), Generator):
     "The generator is not an element of k[t].";
-  X := New(GrpDrchFFElt);
-  X`Parent := DirichletGroup(M : Generator := Generator);
-  C := Codomain(X`Parent);
-  coercible, h := IsCoercible(C, Image);
-  X`Image := coercible select Minimise(h) else C.1;
-  return X;
+  require IsGenerator(M, Generator):
+    "The generator is not a generator of the unit group of k[t] / M.";
+  return DirichletCharacter(DirichletGroup(M : Generator := Generator) :
+      Image := Image);
 end intrinsic;
 
 intrinsic DirichletCharacter(M :: FldFunRatUElt[FldFin] :
@@ -60,12 +75,6 @@ intrinsic Modulus(X :: GrpDrchFFElt) -> RngUPolElt[FldFin]
   return Modulus(Parent(X));
 end intrinsic;
 
-intrinsic 'in'(X :: GrpDrchFFElt, G :: GrpDrchFF) -> BoolElt
-{ The membership of a Dirichlet character X over k(t) in a group G of Dirichlet
-  characters over k(t). This is true if the modulus of X is the modulus of G. }
-  return Characteristic(X) eq Characteristic(G) and Modulus(X) eq Modulus(G);
-end intrinsic;
-
 intrinsic Generator(X :: GrpDrchFFElt) -> RngUPolElt[FldFin]
 { The generator of the unit group of k[t] / M that defines a Dirichlet character
   over k(t) of a non-zero modulus M in k[t]. }
@@ -81,14 +90,6 @@ end intrinsic;
 intrinsic ChangeGenerator(~X :: GrpDrchFFElt, g :: Any)
 { " }
   X := ChangeGenerator(X, g);
-end intrinsic;
-
-intrinsic IsCoercible(G :: GrpDrchFF, X :: GrpDrchFFElt) -> BoolElt, Any
-{ The coercion of a Dirichlet character X over k(t) to a group G of Dirichlet
-  characters over k(t). This is true and returns X with generator changed to the
-  generator of G if X is a member of G. }
-  return X in G, X in G select ChangeGenerator(X, Generator(G)) else
-    "The modulus of G is different from the modulus of X.";
 end intrinsic;
 
 intrinsic BaseRing(X :: GrpDrchFFElt) -> RngUPol[FldFin]
@@ -178,8 +179,7 @@ intrinsic Inverse(X :: GrpDrchFFElt) -> GrpDrchFFElt
 { The inverse of a Dirichlet character X over k(t). This is also equal to the
   complex conjugate of X. }
   if not assigned X`Inverse then
-    X`Inverse := DirichletCharacter(Modulus(X) : Generator := Generator(X),
-        Image := 1 / Image(X));
+    X`Inverse := DirichletCharacter(Parent(X) : Image := 1 / Image(X));
   end if;
   return X`Inverse;
 end intrinsic;
@@ -192,8 +192,7 @@ end intrinsic;
 
 intrinsic '^'(X :: GrpDrchFFElt, n :: RngIntElt) -> GrpDrchFFElt
 { The exponentiation of a Dirichlet character X over k(t) by an integer n. }
-  return DirichletCharacter(Modulus(X) : Generator := Generator(X),
-      Image := Image(X) ^ n);
+  return DirichletCharacter(Parent(X) : Image := Image(X) ^ n);
 end intrinsic;
 
 intrinsic '*'(X :: GrpDrchFFElt, Y :: GrpDrchFFElt) -> GrpDrchFFElt
@@ -201,8 +200,7 @@ intrinsic '*'(X :: GrpDrchFFElt, Y :: GrpDrchFFElt) -> GrpDrchFFElt
   this has not been implemented when X and Y have different moduli in k[t]. }
   coercible, Y := IsCoercible(Parent(X), Y);
   require coercible: "This has not been implemented for different moduli.";
-  return DirichletCharacter(Modulus(X) : Generator := Generator(X),
-      Image := Image(X) * Image(Y));
+  return DirichletCharacter(Parent(X) : Image := Image(X) * Image(Y));
 end intrinsic;
 
 intrinsic '/'(X :: GrpDrchFFElt, Y :: GrpDrchFFElt) -> GrpDrchFFElt
@@ -248,6 +246,22 @@ intrinsic ResidueOrder(X :: GrpDrchFFElt) -> RngIntElt
     X`ResidueOrder := Order(ResidueCharacter(X));
   end if;
   return X`ResidueOrder;
+end intrinsic;
+
+intrinsic IsTrivial(X :: GrpDrchFFElt) -> BoolElt
+{ The triviality of a Dirichlet character X over k(t). }
+  if not assigned X`IsTrivial then
+    X`IsTrivial := Image(X) eq 1;
+  end if;
+  return X`IsTrivial;
+end intrinsic;
+
+intrinsic IsPrimitive(X :: GrpDrchFFElt) -> BoolElt
+{ The primitivity of a Dirichlet character X over k(t). }
+  if not assigned X`IsPrimitive then
+    X`IsPrimitive := not IsTrivial(X);
+  end if;
+  return X`IsPrimitive;
 end intrinsic;
 
 intrinsic IsEven(X :: GrpDrchFFElt) -> BoolElt

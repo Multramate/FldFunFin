@@ -77,7 +77,7 @@ intrinsic Conductor(X :: GrpDrchFFElt) -> SeqEnum[Tup]
     if IsOdd(X) then
       Append(~X`Conductor, <1 / Domain(X).1, 1>);
     end if;
-    if Image(X) ne 1 then
+    if IsPrimitive(X) then
       Append(~X`Conductor, <Modulus(X), 1>);
     end if;
   end if;
