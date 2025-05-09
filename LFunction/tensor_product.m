@@ -1,10 +1,10 @@
 /* L-FUNCTIONS OF DIRICHLET TWISTED ELLIPTIC CURVES OVER GLOBAL FUNCTION FIELDS
 
-Let E be an elliptic curve over a global function field K of a smooth proper
-geometrically irreducible curve of genus g over a finite field k of size q, and
-let X be a Dirichlet character over K, with modulus a non-zero element M of
-k[t]. Assume that the conductors of E and X have disjoint support, and assume
-for now that M is irreducible.
+Let E be an elliptic curve over the global function field k(t) of the projective
+line over a finite field k of size q, with a unique place at infinity 1 / t, and
+let X be a Dirichlet character over k(t) of modulus a non-zero element M of
+k[t]. Assume for now that the conductors of E and X have disjoint support, and
+that M is irreducible.
 
 The twist E x X of E by X is the tensor product motive h^1(E)(1) x [X] with
 w(E x X) = 1, whose l-adic realisation is simply the tensor product H_l(E) x X,
@@ -12,47 +12,19 @@ which has no geometric Galois invariants when either E or X has non-trivial
 conductor. In this case, the local Euler factor L_v(E, X, T) of E x X at a place
 v of K is given by 1 - a_v(E) X(v) T + q_v X(v)^2 T^2 if E has good reduction at
 v, and 1 - a_v(E) X(v) T otherwise. The formal L-function L(E, X, T) is then a
-polynomial of degree d(E x X) equal to 2d(X) + d(E) - 4.
+polynomial of degree d(E x X) equal to d(E) + 2 d(X) + 4.
 
-This file defines some intrinsics that compute the formal L-function of an
-elliptic curve twisted by a Dirichlet character of irreducible moduli over the
-global function field k(t) of the projective line over k, which has a unique
-place at infinity 1 / t. This includes root numbers and local Euler factors.
+It remains to compute the global root number e(E x X) of E x X in the functional
+equation L(E, X, T) = e(E x X) q^(d(E x X)) T^(d(E x X)) L(E, X, 1 / q^2 T)-bar.
+This is equal to e(E) e(X)^2 X(f(E)), where f(E) is f(h^1(E)(1)) viewed as a
+product of prime elements of k[t] raised to their local conductor exponents.
+
+This file defines some intrinsics that compute the formal L-function of E x X.
+This includes root numbers and local Euler factors.
 */
 
 import "elliptic_curve.m": ConductorProductWithLI, TraceOfFrobeniusWithLI,
   RootNumberWithLI, LDegreeWithLI, EpsilonFactorWithLI;
-
-function RootNumberWithLI_(E, X, LIs)
-  return RootNumberWithLI(E, LIs) * RootNumber(X) ^ 2
-    * X(ConductorProductWithLI(E, LIs));
-end function;
-
-intrinsic RootNumber(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt)
-  -> FldCycElt
-{ The global root number e(E x X) of an elliptic curve E over k(t) twisted by a
-  Dirichlet character X, assuming that the conductors of E and X have disjoint
-  support. Note that this has not been implemented for characteristic 2 and 3. }
-  require Characteristic(X) gt 3:
-    "This has not been implemented for characteristic 2 and 3.";
-  return RootNumberWithLI_(E, X, LocalInformation(E));
-end intrinsic;
-
-function EpsilonFactorWithLI_(E, X, LIs)
-  return EpsilonFactorWithLI(E, LIs) * CharacterSum(X) ^ 2
-    * X(ConductorProductWithLI(E, LIs)) * ResidueSize(X) ^ (LDegree(X) + 4);
-end function;
-
-intrinsic EpsilonFactor(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt)
-  -> FldCycElt
-{ The epsilon factor e(E x X) q^(d(E x X)) of an elliptic curve E over k(t)
-  twisted by a Dirichlet character X, assuming that the conductors of E and X
-  have disjoint support. Note that this has not been implemented for
-  characteristic 2 and 3. }
-  require Characteristic(X) gt 3:
-    "This has not been implemented for characteristic 2 and 3.";
-  return EpsilonFactorWithLI_(E, X, LocalInformation(E));
-end intrinsic;
 
 function EulerFactorWithLI_(E, X, LIs, v, D, P);
   R<T> := PolynomialRing(Codomain(X));
@@ -143,8 +115,39 @@ intrinsic EulerFactors(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt,
   return EulerFactorsWithLI_(E, X, LIs, D);
 end intrinsic;
 
+function RootNumberWithLI_(E, X, LIs)
+  return RootNumberWithLI(E, LIs) * RootNumber(X) ^ 2
+    * X(ConductorProductWithLI(E, LIs));
+end function;
+
+intrinsic RootNumber(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt)
+  -> FldCycElt
+{ The global root number e(E x X) of an elliptic curve E over k(t) twisted by a
+  Dirichlet character X, assuming that the conductors of E and X have disjoint
+  support. Note that this has not been implemented for characteristic 2 and 3. }
+  require Characteristic(X) gt 3:
+    "This has not been implemented for characteristic 2 and 3.";
+  return RootNumberWithLI_(E, X, LocalInformation(E));
+end intrinsic;
+
+function EpsilonFactorWithLI_(E, X, LIs)
+  return EpsilonFactorWithLI(E, LIs) * CharacterSum(X) ^ 2
+    * X(ConductorProductWithLI(E, LIs)) * ResidueSize(X) ^ (LDegree(X) + 4);
+end function;
+
+intrinsic EpsilonFactor(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt)
+  -> FldCycElt
+{ The epsilon factor e(E x X) q^(d(E x X)) of an elliptic curve E over k(t)
+  twisted by a Dirichlet character X, assuming that the conductors of E and X
+  have disjoint support. Note that this has not been implemented for
+  characteristic 2 and 3. }
+  require Characteristic(X) gt 3:
+    "This has not been implemented for characteristic 2 and 3.";
+  return EpsilonFactorWithLI_(E, X, LocalInformation(E));
+end intrinsic;
+
 function LDegreeWithLI_(E, X, LIs)
-  return 2 * LDegree(X) + LDegreeWithLI(E, LIs) + 4;
+  return LDegreeWithLI(E, LIs) + 2 * LDegree(X) + 4;
 end function;
 
 intrinsic LDegree(E :: CrvEll[FldFunRat[FldFin]], X :: GrpDrchFFElt)

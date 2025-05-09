@@ -1,8 +1,8 @@
 /* GENERAL INTRINSICS FOR DIRICHLET CHARACTERS OVER GLOBAL FUNCTION FIELDS
 
-This file defines some general intrinsics relevant for Dirichlet characters of a
-non-zero modulus M in k[t] over the global function field k(t) of the projective
-line over a finite field k, which includes:
+This file defines some general intrinsics for Dirichlet characters of non-zero
+moduli M in k[t] over the global function field k(t) of the projective line over
+a finite field k, with a unique place at infinity 1 / t. This includes:
 - AllMonicPolynomials: the set of all monic polynomials over k of some degree
 - EulerPhi: the size of the unit group of k[t] / M
 - Log: the discrete logarithm in the unit group of k[t] / M

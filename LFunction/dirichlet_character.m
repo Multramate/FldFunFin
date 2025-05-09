@@ -1,9 +1,9 @@
 /* L-FUNCTIONS OF DIRICHLET CHARACTERS OVER GLOBAL FUNCTION FIELDS
 
-Let X be a Dirichlet character over a global function field K of a smooth proper
-geometrically irreducible curve of genus g over a finite field k of size q, with
-modulus a non-zero element M of k[t]. The motive [X] associated to X has
-w(X) := w([X]) = 0, and its l-adic realisation is simply the complex Galois
+Let X be a Dirichlet character over the global function field k(t) of the
+projective line over a finite field k of size q of modulus a non-zero element M
+of k[t], with a unique place at infinity 1 / t. The motive [X] associated to X
+has w(X) := w([X]) = 0, and its l-adic realisation is simply the complex Galois
 representation associated to X. Assume for now that M is irreducible.
 
 The conductor of X has support containing the places 1 / t and M. The place
@@ -14,20 +14,24 @@ group of k[t] / M, in which case the ramification is necessarily tame. The
 complex Galois representation associated to X has geometric Galois invariants
 precisely when X has trivial conductor, in which case the formal L-function
 L(X, T) of X is precisely 1 / (1 - T) (1 - q T). In general, the local Euler
-factor L_v(X, T) of X at a place v of K is given by 1 - X(v) T, where X(v) is 0
-if X is ramified at v, and 1 if v is 1 / t and X is unramified at v.
+factor L_v(X, T) of X at a place v of k(t) is given by 1 - X(v) T, where X(v) is
+0 if X is ramified at v, and 1 if v is 1 / t and X is unramified at v.
 
-This file defines some intrinsics that compute the formal L-function of a
-Dirichlet character of irreducible moduli over the global function field k(t) of
-the projective line over k, which has a unique place at infinity 1 / t. This
-includes global root numbers and local Euler factors.
+It remains to compute the global root number e(X) := e([X]) of X in the
+functional equation L(X, T) = e(X) q^(d(X) / 2) T^(d(X)) L(X, 1 / q T)-bar,
+where d(X) := d([X]) is deg f([X]) - 2. This is equal to the character sum of X
+over all monic polynomials of degree deg M - 1, with an additional negative sign
+if X is even, divided by the square root of q^(d(X)).
+
+This file defines some intrinsics that compute the formal L-function of X. This
+includes generalised character sums, local Euler factors, and root numbers.
 */
 
 intrinsic CharacterSum(X :: GrpDrchFFElt : D := ResidueDegree(X) - 1)
   -> FldCycElt
 { The character sum of a Dirichlet character X over k(t) of a non-zero modulus M
   in k[t]. This is the sum of X(x) of all monic polynomials x of k[t] of degree
-  D. By default, D is set to be deg(M) - 1. }
+  D. By default, D is set to be deg M - 1. }
   if not assigned X`CharacterSum then
     X`CharacterSum := &+[X(f) :
         f in AllMonicPolynomials(ResidueField(X), ResidueDegree(X) - 1)];

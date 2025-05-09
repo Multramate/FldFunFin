@@ -8,7 +8,8 @@ group of R / M to the complex field, whose image lies in the cyclotomic
 extension of K of modulus equal to the Euler totient function Phi(M) of M.
 
 This file defines the group of Dirichlet characters of irreducible moduli over
-the global function field k(t) of the projective line over a finite field k.
+the global function field k(t) of the projective line over a finite field k,
+with a unique place at infinity 1 / t.
 */
 
 declare type GrpDrchFF[GrpDrchFFElt];
@@ -172,7 +173,7 @@ end intrinsic;
 
 intrinsic ResidueDegree(G :: GrpDrchFF) -> RngIntElt
 { The residue degree for a group G of Dirichlet characters over k(t) of a
-  non-zero modulus M in k[t]. This is equal to the degree deg(M) of M. }
+  non-zero modulus M in k[t]. This is equal to the degree deg M of M. }
   if not assigned G`ResidueDegree then
     G`ResidueDegree := Degree(Modulus(G));
   end if;
